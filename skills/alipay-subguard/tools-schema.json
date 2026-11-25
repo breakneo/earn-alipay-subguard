@@ -1,0 +1,66 @@
+{
+  "skill_name": "alipay-subguard",
+  "display_name": "生活好帮手+订阅刺客体检仪",
+  "version": "1.0.0",
+  "ecosystem": "Alipay Abao (支付宝阿宝)",
+  "privacy_mode": "on-device-first",
+  "tools": [
+    {
+      "name": "abao_sync_recurring_bills",
+      "description": "经用户单次授权，只读拉取近 90 天支付宝周期性免密扣款摘要（演示 Web 版采用本地脱敏沙盒 + 本地 CSV/短信离线解析，接入阿宝后直连支付宝账单开放能力）。",
+      "requires_user_confirmation": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "window_days": { "type": "integer", "default": 90 },
+          "persona_sandbox": { "type": "string", "enum": ["worker", "elder", "developer"] }
+        }
+      }
+    },
+    {
+      "name": "subguard_precheck_offer",
+      "description": "在用户浏览会员/订阅付费页唤起阿宝时，实时拆解首月低价涨价倍率、首年真实成本及与现有支付宝订阅的重叠冲突。",
+      "requires_user_confirmation": false,
+      "parameters": {
+        "type": "object",
+        "required": ["promo_text"],
+        "properties": {
+          "service_name": { "type": "string" },
+          "promo_text": { "type": "string" },
+          "first_price_cny": { "type": "number" },
+          "renew_price_cny": { "type": "number" },
+          "cycle": { "type": "string", "enum": ["monthly", "quarterly", "yearly"] }
+        }
+      }
+    },
+    {
+      "name": "subguard_audit_subscriptions",
+      "description": "对账单周期扣款执行红/黄/绿三色止血体检，计算年度可立省金额与 3 年复利止损额。",
+      "requires_user_confirmation": false,
+      "parameters": {
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "items": { "type": "array", "items": { "type": "object" } }
+        }
+      }
+    },
+    {
+      "name": "abao_prepare_refund_appeal",
+      "description": "针对误扣/静默自动续费订单，依据《网络交易监督管理办法》第 18 条生成追回胜率评估、支付宝投诉举证包，并在用户二次确认后触发解约免密与提交申诉。",
+      "requires_user_confirmation": true,
+      "parameters": {
+        "type": "object",
+        "required": ["merchant", "amount", "last_date"],
+        "properties": {
+          "merchant": { "type": "string" },
+          "amount": { "type": "number" },
+          "last_date": { "type": "string" },
+          "order_no": { "type": "string" },
+          "unused_after_renew": { "type": "boolean" },
+          "no_advance_notice": { "type": "boolean" }
+        }
+      }
+    }
+  ]
+}

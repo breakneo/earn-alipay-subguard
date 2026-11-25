@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>生活好帮手+订阅刺客体检仪 · 支付宝阿宝生态智能体</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-logo">保</div>
+        <div>
+          <div class="brand-title">生活好帮手 · 订阅刺客体检仪</div>
+          <div class="brand-sub">支付宝「阿宝」× 订阅保镖 Skill · 事前扫雷 / 事中体检 / 事后追回</div>
+        </div>
+      </div>
+      <div class="top-actions">
+        <span class="pill pill-green">🔒 纯本地离线解析 · 0 字节上传</span>
+        <button class="btn btn-soft btn-sm" id="btnOpenAbaoSync">⚡ 阿宝授权同步账单</button>
+        <button class="btn btn-sm" id="btnExportReport">📄 导出家庭止血单</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div>
+        <h1>一眼揪出静默自动续费，把被偷扣的钱追回来</h1>
+        <p>深度融合支付宝「阿宝」场景：买会员前唤起阿宝算清首年真实账单，日常一键授权体检近 90 天周期扣款，被误扣后由阿宝 + 订阅保镖 Skill 生成《网交办法》第 18 条举证申诉包并在你二次确认后解约追回。</p>
+        <div class="hero-badges">
+          <span class="hero-chip">事前：浏览付费页唤起阿宝扫雷</span>
+          <span class="hero-chip">事中：阿宝账单同步 + 本地 CSV/短信解析</span>
+          <span class="hero-chip">事后：二次确认解约免密 + 一键申诉追回</span>
+        </div>
+      </div>
+      <div class="hero-cta">
+        <div style="font-size:12px;color:#93c5fd;">快速切换体验场景（脱敏真实账单）</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;" id="presetBar">
+          <button class="btn btn-sm" data-preset="worker">都市打工人</button>
+          <button class="btn btn-sm" data-preset="elder">银发长辈防误触</button>
+          <button class="btn btn-sm" data-preset="developer">AI 开发者</button>
+        </div>
+      </div>
+    </section>
+
+    <nav class="tabs" role="tablist">
+      <button class="tab-btn active" data-tab="abao">
+        <span class="tab-k">ABAO COPILOT</span>
+        <span class="tab-t">阿宝对话工作台</span>
+        <span class="tab-s">一句话唤起订阅保镖 Skill 全链路</span>
+      </button>
+      <button class="tab-btn" data-tab="audit">
+        <span class="tab-k">IN-FLIGHT AUDIT</span>
+        <span class="tab-t">事中体检 · 账单扫描</span>
+        <span class="tab-s">阿宝同步 / CSV 拖拽 / 短信离线解析</span>
+      </button>
+      <button class="tab-btn" data-tab="precheck">
+        <span class="tab-k">PRE-PURCHASE GUARD</span>
+        <span class="tab-t">事前拦截 · 买前扫雷</span>
+        <span class="tab-s">浏览会员页唤起阿宝算涨价与重叠</span>
+      </button>
+      <button class="tab-btn" data-tab="appeal">
+        <span class="tab-k">AUTO RECOVERY</span>
+        <span class="tab-t">事后追回 · 自动申诉</span>
+        <span class="tab-s">法规举证 + 二次确认解约与退款</span>
+      </button>
+    </nav>
+
+    <!-- TAB 1: 阿宝对话工作台 -->
+    <section class="panel active" id="panel-abao">
+      <div class="chat-layout">
+        <div class="card">
+          <div class="sec-title">
+            <span>💬 阿宝 × 订阅保镖 Skill 实时交互舱</span>
+            <span class="pill pill-blue mono">skill: alipay-subguard v1.0</span>
+          </div>
+          <div class="sec-sub">体验在支付宝「阿宝」内用一句话完成查账、买前避坑、帮爸妈排雷与误扣追回（实时展示工具调用轨迹与安全确认红线）。</div>
+
+          <div class="quick-prompts" id="quickPrompts">
+            <button class="btn btn-soft btn-sm" data-q="阿宝，帮我拉取近 90 天支付宝账单，查查有哪些自动续费刺客">🔍 拉取近90天账单查刺客</button>
+            <button class="btn btn-soft btn-sm" data-q="我正在浏览某视频首月1元体验、次月起连续包月28元的活动，帮我扫雷值不值？">🛡️ 浏览付费页唤起买前扫雷</button>
+            <button class="btn btn-soft btn-sm" data-q="昨晚被知乎盐选静默扣了19元，我完全没用，启动订阅保镖帮我申诉追回">⚖️ 昨晚被误扣，自动申诉追回</button>
+            <button class="btn btn-soft btn-sm" data-q="阿宝，帮我查查爸妈手机里有没有误开的清理大师和天气VIP免密扣款">👴 帮爸妈查长辈误触免密</button>
+          </div>
+
+          <div class="chat-stream" id="chatStream"></div>
+
+          <div class="chat-input-row">
+            <input class="input" id="chatInput" placeholder="输入任意指令，如：0.01元试用7天到期自动扣198元包年值不值？或 帮我追回昨晚误扣..." />
+            <button class="btn btn-primary" id="btnSendChat">发给阿宝</button>
+          </div>
+        </div>
+
+        <div class="card" style="display:flex;flex-direction:column;gap:14px;">
+          <div>
+            <div class="sec-title"><span>🧩 支付宝阿宝生态接入契约</span></div>
+            <div class="sec-sub">已配套规范 <span class="mono">SKILL.md</span> 与 <span class="mono">tools-schema.json</span>，明确端侧隐私与资金操作二次确认边界。</div>
+          </div>
+          <div id="abaoLiveSummary" style="background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:14px;"></div>
+          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:14px;font-size:13px;color:#1e3a8a;">
+            <strong style="display:block;margin-bottom:6px;">🔐 Human-in-the-Loop 安全设计</strong>
+            <div>1. 账单分析默认只读脱敏摘要，不触碰密码与卡号；</div>
+            <div>2. <strong>关闭免密协议</strong>与<strong>提交退费申诉</strong>强制弹出用户二次确认，绝不静默代操作；</div>
+            <div>3. 当前 Web 演示可离线直跑，接入阿宝后一键直连真实支付宝账单与免密管理页。</div>
+          </div>
+          <div style="margin-top:auto;display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-primary btn-sm" data-jump="audit">进入账单体检 →</button>
+            <button class="btn btn-sm" data-jump="precheck">进入买前扫雷 →</button>
+            <button class="btn btn-sm" data-jump="appeal">进入申诉追回 →</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: 事中体检 -->
+    <section class="panel" id="panel-audit">
+      <div class="grid-4" style="margin-bottom:18px;" id="kpiGrid"></div>
+
+      <div class="grid-2" style="margin-bottom:18px;">
+        <div class="card">
+          <div class="sec-title">
+            <span>📥 账单与订阅导入（4 种零门槛方式）</span>
+            <span class="pill pill-blue" id="sourceBadge">当前：都市打工人</span>
+          </div>
+          <div class="sec-sub">支持拖拽真实支付宝/微信导出 CSV、粘贴扣费短信（自动折算美元 USD），或点击右上角模拟阿宝一键同步。</div>
+          <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+            <label class="btn btn-soft btn-sm" style="cursor:pointer;">
+              📂 上传支付宝/微信 CSV 账单
+              <input type="file" id="csvFileInput" accept=".csv,.txt" style="display:none;" />
+            </label>
+            <button class="btn btn-sm" id="btnFillSmsDemo">填入示例扣费短信</button>
+            <button class="btn btn-sm" id="btnToggleCatalog">📋 30+ 常见刺客勾选</button>
+          </div>
+          <textarea id="billTextInput" rows="4" placeholder="直接粘贴扣费短信或账单行（每行一条，支持人民币 ¥/元 与美元 $），例如：&#10;【支付宝】2026-11-24 通过自动扣款向知乎盐选支付19.00元（首月1元，未使用）&#10;ChatGPT Plus 自动续费 $20/月"></textarea>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;">
+            <span style="font-size:12px;color:var(--muted);">所有文本仅在当前浏览器内存解析，绝不联网外传</span>
+            <button class="btn btn-primary btn-sm" id="btnParseBill">离线解析并合并体检</button>
+          </div>
+
+          <div id="catalogDrawer" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <strong style="font-size:13px;">勾选你正在付费的常见订阅（自动带入月费估算）：</strong>
+              <button class="btn btn-primary btn-sm" id="btnApplyCatalog">加入体检清单</button>
+            </div>
+            <div class="catalog-grid" id="catalogGrid"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="sec-title"><span>📊 年度隐形漏财分类占比</span></div>
+          <div class="sec-sub">一眼看清钱主要漏在影音重叠、云盘办公还是高额 AI / 长辈误触类目。</div>
+          <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+            <div id="donutChart" style="width:185px;height:185px;flex-shrink:0;"></div>
+            <div id="categoryLegend" style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:8px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="sec-title">
+          <span>🩺 红 / 黄 / 绿三色止血处方清单</span>
+          <div style="display:flex;gap:6px;" id="filterBar">
+            <button class="btn btn-sm btn-primary" data-filter="all">全部</button>
+            <button class="btn btn-sm" data-filter="red">🔴 立刻止血</button>
+            <button class="btn btn-sm" data-filter="yellow">🟡 降级平替</button>
+            <button class="btn btn-sm" data-filter="green">🟢 健康保留</button>
+          </div>
+        </div>
+        <div class="sec-sub">点击每条卡片右侧「关免密指南」可看精确解约路径，点击「一键申诉追回」直达阿宝追回流水线。</div>
+        <div class="sub-list" id="subList"></div>
+      </div>
+    </section>
+
+    <!-- TAB 3: 事前拦截 -->
+    <section class="panel" id="panel-precheck">
+      <div class="grid-2">
+        <div class="card">
+          <div class="sec-title"><span>📱 模拟场景：浏览会员购买页时唤起阿宝扫雷</span></div>
+          <div class="sec-sub">点选常见“低价首月”诱饵，或粘贴任意商家促销条款，3 秒看穿真实首年总价与已有订阅冲突。</div>
+
+          <div class="promo-cards" id="promoPresets">
+            <button class="promo-btn" data-name="芒果TV连续包月" data-first="1" data-renew="28" data-cycle="monthly" data-text="芒果TV首月1元体验，次月起自动连续包月28元">
+              <strong>🎬 影音诱饵：首月 ¥1 → 次月 ¥28</strong>
+              <span>检验 28 倍暴涨 + 同类影音重叠碰撞</span>
+            </button>
+            <button class="promo-btn" data-name="轻颜修图VIP" data-first="0.01" data-renew="198" data-cycle="yearly" data-text="轻颜VIP 0.01元试用7天，到期自动扣费198元/年">
+              <strong>📸 修图陷阱：¥0.01 试用 → 年扣 ¥198</strong>
+              <span>检验高危“试用转包年”静默扣款拦截</span>
+            </button>
+            <button class="promo-btn" data-name="百度网盘超级会员" data-first="9" data-renew="25" data-cycle="monthly" data-text="百度网盘首月9元，次月起25元连续包月">
+              <strong>☁️ 云盘重叠：已有夸克还买度盘</strong>
+              <span>结合当前账单自动提醒功能重复</span>
+            </button>
+            <button class="promo-btn" data-name="极速清理大师VIP" data-first="0.1" data-renew="29.9" data-cycle="monthly" data-text="清理大师0.1元体验，次月起29.9元/月自动扣款">
+              <strong>👴 长辈诱饵：¥0.1 弹窗清理 VIP</strong>
+              <span>直接命中高危伪刚需强拦截</span>
+            </button>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div>
+              <label style="font-size:12.5px;font-weight:700;color:var(--ink-2);">粘贴商家促销文案 / 页面条款</label>
+              <textarea id="prePromoText" rows="3" placeholder="例如：首月仅需1元，次月起恢复28元/月自动续费..."></textarea>
+            </div>
+            <div style="display:grid;grid-template-columns:1.2fr 0.9fr 0.9fr 0.9fr;gap:8px;">
+              <div>
+                <label style="font-size:12px;color:var(--muted);">服务名称</label>
+                <input class="input" id="preName" placeholder="如：芒果TV" />
+              </div>
+              <div>
+                <label style="font-size:12px;color:var(--muted);">首期价 (¥)</label>
+                <input class="input" id="preFirst" type="number" step="0.01" placeholder="1" />
+              </div>
+              <div>
+                <label style="font-size:12px;color:var(--muted);">续费价 (¥)</label>
+                <input class="input" id="preRenew" type="number" step="0.01" placeholder="28" />
+              </div>
+              <div>
+                <label style="font-size:12px;color:var(--muted);">续费周期</label>
+                <select id="preCycle">
+                  <option value="monthly">按月</option>
+                  <option value="quarterly">按季</option>
+                  <option value="yearly">按年</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn btn-primary" id="btnRunPrecheck">🛡️ 唤起阿宝实时扫雷分析</button>
+          </div>
+        </div>
+
+        <div class="card" id="precheckResult"></div>
+      </div>
+    </section>
+
+    <!-- TAB 4: 事后追回 -->
+    <section class="panel" id="panel-appeal">
+      <div class="grid-2">
+        <div class="card">
+          <div class="sec-title"><span>⚖️ 阿宝 + 订阅保镖 Skill 自动申诉编排台</span></div>
+          <div class="sec-sub">选择被误扣订单并勾选事实情况，系统自动匹配《网络交易监督管理办法》第 18 条并编排 4 步追回流程。</div>
+
+          <div style="margin-bottom:12px;">
+            <label style="font-size:12.5px;font-weight:700;color:var(--ink-2);display:block;margin-bottom:6px;">选择需追回/解约的账单订单</label>
+            <select id="appealSelect"></select>
+          </div>
+
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;font-size:13px;">
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;"><input type="checkbox" id="chk7d" checked /> 扣款在 7 日内</label>
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;"><input type="checkbox" id="chkUnused" checked /> 续费后未使用权益</label>
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;"><input type="checkbox" id="chkNoNotice" checked /> 未收到提前5日显著提醒</label>
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;"><input type="checkbox" id="chkElder" /> 长辈误触开通</label>
+          </div>
+
+          <div id="appealWorkflow"></div>
+
+          <div style="margin-top:14px;padding:14px;border-radius:12px;background:#fffbeb;border:1px solid #fde68a;">
+            <div style="font-size:13px;font-weight:800;color:#92400e;margin-bottom:6px;">🔒 用户二次确认授权门禁（阿宝绝不静默代操）</div>
+            <div style="font-size:12.5px;color:#78350f;margin-bottom:10px;">点击下方按钮模拟在支付宝阿宝内授权执行第 3 步（关闭免密协议）与第 4 步（提交账单退费申诉并跟踪到账）。</div>
+            <button class="btn btn-primary" id="btnConfirmAppealExec">✅ 我已核对证据，授权阿宝执行解约 + 提交申诉（沙盒演示）</button>
+          </div>
+        </div>
+
+        <div class="card" id="appealScriptsPanel"></div>
+      </div>
+    </section>
+
+    <div class="footer-note">
+      <div><strong>架构透明说明</strong>：本应用全部账单解析、扫雷计算与申诉生成均在本地浏览器 100% 离线执行（0 字节上传）。「阿宝账单授权同步」与「自动解约申诉执行」在独立 Web 端以脱敏沙盒演示；项目已配套完整 <span class="mono">skills/alipay-subguard/SKILL.md</span> 与 <span class="mono">tools-schema.json</span>，接入支付宝阿宝开放能力后即可直连真实免密与账单服务。</div>
+      <div class="mono">ID: 6ebc96914f8eab · 生活好帮手</div>
+    </div>
+  </main>
+
+  <!-- 阿宝授权同步弹窗 -->
+  <div class="modal-backdrop" id="syncModal">
+    <div class="modal">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <strong style="font-size:17px;">⚡ 支付宝「阿宝」账单只读授权（演示沙盒）</strong>
+        <button class="btn btn-sm" id="btnCloseModal">关闭</button>
+      </div>
+      <p style="font-size:13.5px;color:var(--ink-2);margin-bottom:14px;">接入支付宝阿宝后，仅在本次授权内<strong>只读提取近 90 天周期性免密扣款摘要</strong>（商户名、周期、金额、订单号），不读取账户余额、密码或隐私转账。请选择一套脱敏沙盒账单立即体验：</p>
+      <div style="display:flex;flex-direction:column;gap:9px;">
+        <button class="btn btn-soft" data-sync-preset="worker" style="justify-content:space-between;"><span>🧑‍💻 都市打工人（8项扣款 · 含首月¥1暴涨/多影音云盘重叠）</span><strong>一键同步 →</strong></button>
+        <button class="btn btn-soft" data-sync-preset="elder" style="justify-content:space-between;"><span>👴 银发长辈家庭守护（5项扣款 · 含广告诱导清理/天气VIP）</span><strong>一键同步 →</strong></button>
+        <button class="btn btn-soft" data-sync-preset="developer" style="justify-content:space-between;"><span>🚀 AI 开发者多币种（5项扣款 · 含高额美元AI订阅重叠）</span><strong>一键同步 →</strong></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 关闭免密指南弹窗 -->
+  <div class="modal-backdrop" id="cancelModal">
+    <div class="modal" id="cancelModalBody"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
