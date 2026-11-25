@@ -6,6 +6,13 @@
  */
 
 export const LLM_PROVIDERS = {
+  scnet: {
+    id: "scnet",
+    name: "国家超算互联网（SCNet · GLM-5.3-Flash）",
+    endpoint: "https://api.scnet.cn/api/llm/v1/chat/completions",
+    model: "GLM-5.3-Flash",
+    note: "国内直连支持浏览器跨域，响应快",
+  },
   qwen: {
     id: "qwen",
     name: "通义千问（阿里云百炼）",
@@ -29,10 +36,10 @@ export const LLM_PROVIDERS = {
   },
   custom: {
     id: "custom",
-    name: "自定义兼容接口 / 评审体验代理",
+    name: "自定义兼容接口 / 限流体验代理",
     endpoint: "",
-    model: "qwen-plus",
-    note: "支持填写限流公益代理地址或任意兼容对话接口",
+    model: "GLM-5.3-Flash",
+    note: "支持填写限流代理地址或任意 OpenAI 兼容接口",
   },
 };
 
@@ -44,9 +51,9 @@ const STORAGE_KEY = "subguard_llm_config_v1";
 export function loadLlmConfig() {
   const fallback = {
     enabled: Boolean(DEFAULT_REVIEW_PROXY_ENDPOINT),
-    provider: DEFAULT_REVIEW_PROXY_ENDPOINT ? "custom" : "qwen",
-    endpoint: DEFAULT_REVIEW_PROXY_ENDPOINT || LLM_PROVIDERS.qwen.endpoint,
-    model: LLM_PROVIDERS.qwen.model,
+    provider: DEFAULT_REVIEW_PROXY_ENDPOINT ? "custom" : "scnet",
+    endpoint: DEFAULT_REVIEW_PROXY_ENDPOINT || LLM_PROVIDERS.scnet.endpoint,
+    model: LLM_PROVIDERS.scnet.model,
     apiKey: "",
   };
   try {
@@ -75,7 +82,7 @@ export function isLlmActive(cfg) {
   if (!cfg || !cfg.enabled) return false;
   if (!cfg.endpoint) return false;
   // 若指向限流代理，可免填前端密钥；直连模型厂商接口时需密钥
-  const isOfficialDirect = /dashscope\.aliyuncs\.com|api\.deepseek\.com|volces\.com|api\.openai\.com/.test(cfg.endpoint);
+  const isOfficialDirect = /api\.scnet\.cn|dashscope\.aliyuncs\.com|api\.deepseek\.com|volces\.com|api\.openai\.com/.test(cfg.endpoint);
   if (isOfficialDirect && !cfg.apiKey?.trim()) return false;
   return true;
 }
@@ -83,7 +90,7 @@ export function isLlmActive(cfg) {
 /**
  * 调用真实大模型（兼容标准对话补全协议），超时自动中止并由上层无感回退至端侧引擎
  */
-async function callChatCompletion(cfg, systemPrompt, userPrompt, timeoutMs = 15000) {
+async function callChatCompletion(cfg, systemPrompt, userPrompt, timeoutMs = 25000) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
@@ -91,19 +98,24 @@ async function callChatCompletion(cfg, systemPrompt, userPrompt, timeoutMs = 150
     if (cfg.apiKey?.trim()) {
       headers.Authorization = `Bearer ${cfg.apiKey.trim()}`;
     }
+    const payload = {
+      model: cfg.model || "GLM-5.3-Flash",
+      temperature: 0.3,
+      max_tokens: 600,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+    };
+    // 针对 GLM / SCNet 思考型模型关闭冗长思考链，将响应延迟从 25s+ 降至 3s 左右
+    if (/glm|scnet/i.test(`${cfg.model} ${cfg.endpoint}`)) {
+      payload.thinking = { type: "disabled" };
+    }
     const resp = await fetch(cfg.endpoint, {
       method: "POST",
       headers,
       signal: ctrl.signal,
-      body: JSON.stringify({
-        model: cfg.model || "qwen-plus",
-        temperature: 0.3,
-        max_tokens: 550,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-      }),
+      body: JSON.stringify(payload),
     });
     if (!resp.ok) {
       const errText = await resp.text().catch(() => "");
@@ -123,20 +135,27 @@ async function callChatCompletion(cfg, systemPrompt, userPrompt, timeoutMs = 150
  */
 export async function enhanceAbaoChatWithLLM(cfg, userMessage, auditSummary, localResult) {
   const systemPrompt = [
-    "你是支付宝生态的「阿宝 · 订阅刺客体检助手」，面向中国普通家庭和上班族提供务实、接地气的中文建议。",
+    "你是支付宝生态的「阿宝 · 订阅体检助手」，面向中国普通家庭和上班族提供务实、简洁的中文建议。",
     "要求：",
     "1. 全程使用简洁清晰的中文，不堆砌英文术语；",
-    "2. 严格基于提供的本地账单统计数字作答，绝不编造金额；",
+    "2. 严格基于提供的本地账单统计数字作答，绝不编造金额或商户；",
     "3. 涉及退费或法规时明确提示“仅供参考，不构成法律意见”；",
-    "4. 给出 3 条以内具体可执行的止血或避坑动作，字数控制在 220 字以内。",
+    "4. 给出 3 条以内具体可执行的建议，字数控制在 220 字以内。",
   ].join("\n");
+
+  const itemsBrief = auditSummary.items
+    .map(
+      (x) =>
+        `${x.merchant}(¥${x.amount}/${x.cycle}，${x.channel}，${x.actionLabel}${x.chargeCount >= 2 ? `，近3月扣${x.chargeCount}次` : ""}${x.flags?.length ? `，提示：${x.flags.join("/")}` : ""})`
+    )
+    .join("；");
 
   const userPrompt = [
     `用户提问：${userMessage}`,
-    `本地账单体检汇总：共 ${auditSummary.stats.count} 项周期扣款，年总支出 ¥${auditSummary.stats.totalYearly}，红灯高危 ${auditSummary.stats.redCount} 项，预计年度可立省 ¥${auditSummary.stats.potentialSaveYearly}。`,
-    `红灯高危项：${auditSummary.items.filter((x) => x.level === "red").map((x) => `${x.merchant}(¥${x.amount}/${x.cycle})`).join("、") || "无"}`,
-    `端侧规则引擎初步判断：${localResult.reply.replace(/\*\*/g, "")}`,
-    "请结合用户提问给出更贴合生活场景的中文解读与行动建议：",
+    `本地账单体检汇总：共 ${auditSummary.stats.count} 项周期/会员扣款，月均 ¥${auditSummary.stats.totalMonthly}，年总支出 ¥${auditSummary.stats.totalYearly}，预计年度可省 ¥${auditSummary.stats.potentialSaveYearly}。`,
+    `已识别明细：${itemsBrief || "暂无已导入账单"}`,
+    `本地规则初步判断：${localResult.reply.replace(/\*\*/g, "")}`,
+    "请结合用户提问给出直接、贴合日常生活的中文建议：",
   ].join("\n");
 
   return callChatCompletion(cfg, systemPrompt, userPrompt);

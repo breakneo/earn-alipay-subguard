@@ -376,7 +376,10 @@ function appendChatMessage(role, contentHtml) {
   if (role === "user") {
     div.textContent = contentHtml;
   } else {
-    div.innerHTML = contentHtml.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br/>");
+    div.innerHTML = contentHtml
+      .replace(/^#{1,3}\s+(.+)$/gm, "<strong>$1</strong>")
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\n/g, "<br/>");
   }
   stream.appendChild(div);
   stream.scrollTop = stream.scrollHeight;
