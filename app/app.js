@@ -164,8 +164,9 @@ function renderAudit() {
             <span class="pill pill-slate">${x.channel}</span>
           </div>
           <div class="sub-flags">
+            ${x.chargeCount >= 2 ? `<span class="pill pill-blue">近3个月扣 ${x.chargeCount} 次</span>` : ""}
             ${x.flags.slice(0, 2).map((f) => `<span class="pill ${x.level === "red" ? "pill-red" : "pill-amber"}">${f}</span>`).join("")}
-            ${!x.flags.length ? `<span class="pill pill-green">常用项目</span>` : ""}
+            ${!x.flags.length ? `<span class="pill pill-green">常用刚需</span>` : ""}
           </div>
         </div>
         <div class="sub-right">
@@ -215,20 +216,29 @@ function renderAudit() {
 function openCancelModal(item) {
   if (!item) return;
   const g = item.cancelGuide;
+  const abaoCmd = `打开我的免密支付和自动扣款，帮我找「${item.merchant}」`;
   $("#cancelModalBody").innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
       <strong style="font-size:15.5px;">怎么关闭「${item.merchant}」自动扣款</strong>
       <button class="btn btn-sm" id="btnCloseCancel">关闭</button>
     </div>
-    <div class="pill pill-blue" style="margin-bottom:10px;">${g.channel}</div>
-    <ol style="padding-left:18px;font-size:14px;display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:13px;color:#1e3a8a;">
+      <div style="font-weight:700;margin-bottom:6px;">⚡ 唤起支付宝「阿宝」直达：</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="btn btn-primary btn-sm" id="btnCopyAbaoCmd">复制口令问阿宝</button>
+        <a class="btn btn-soft btn-sm" href="alipays://platformapi/startapp?appId=20000003" style="text-decoration:none;">手机端打开支付宝</a>
+      </div>
+    </div>
+    <div class="pill pill-slate" style="margin-bottom:8px;">手动路径 · ${g.channel}</div>
+    <ol style="padding-left:18px;font-size:13.5px;display:flex;flex-direction:column;gap:7px;margin-bottom:12px;">
       ${g.steps.map((s) => `<li>${s}</li>`).join("")}
     </ol>
     <div style="display:flex;justify-content:flex-end;gap:8px;">
-      <button class="btn btn-soft btn-sm" id="btnCopyCancel">复制发给家人</button>
+      <button class="btn btn-sm" id="btnCopyCancel">复制步骤发给家人</button>
     </div>`;
   $("#cancelModal").classList.add("open");
   $("#btnCloseCancel").onclick = () => $("#cancelModal").classList.remove("open");
+  $("#btnCopyAbaoCmd").onclick = () => copyText(abaoCmd, "已复制口令，打开支付宝问阿宝即可直达");
   $("#btnCopyCancel").onclick = () => copyText(`关闭「${item.merchant}」步骤：\n${g.steps.map((s, i) => `${i + 1}. ${s}`).join("\n")}`, "已复制步骤");
 }
 
@@ -432,7 +442,9 @@ async function handleCsvFile(file) {
   const buf = await file.arrayBuffer();
   let txt = new TextDecoder("utf-8").decode(buf);
   if (txt.includes("\uFFFD")) {
-    try { txt = new TextDecoder("gbk").decode(buf); } catch {}
+    try { txt = new TextDecoder("gb18030").decode(buf); } catch {
+      try { txt = new TextDecoder("gbk").decode(buf); } catch {}
+    }
   }
   const parsed = parseBillText(txt);
   if (!parsed.length) {
@@ -443,7 +455,8 @@ async function handleCsvFile(file) {
   state.isSample = false;
   persistItems();
   renderAll();
-  showToast(`已从账单识别出 ${parsed.length} 笔周期扣款`);
+  const scanned = parsed[0]?.scannedExpenses;
+  showToast(scanned ? `已扫描 ${scanned} 笔支出，精准筛出 ${parsed.length} 笔周期/会员扣款` : `已识别出 ${parsed.length} 笔周期扣款`);
 }
 
 function renderCatalog() {
@@ -481,6 +494,7 @@ function init() {
 
   $("#btnHowExport").onclick = () => $("#exportGuideModal").classList.add("open");
   $("#btnCloseExportGuide").onclick = () => $("#exportGuideModal").classList.remove("open");
+  $("#btnCopyExportAbao").onclick = () => copyText("帮我打开账单并导出近3个月个人对账明细", "已复制口令，打开支付宝问阿宝即可");
 
   $("#btnLoadSample").onclick = () => {
     state.items = structuredClone(SAMPLE_BILL_ITEMS);

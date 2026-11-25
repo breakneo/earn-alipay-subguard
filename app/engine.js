@@ -20,10 +20,12 @@ export const MERCHANT_CATALOG = [
   { key: "夸克网盘", aliases: ["夸克", "quark"], category: "网盘办公", typicalMonthly: 19, channel: "支付宝", alt: "88VIP 含网盘权益，别重复付费" },
   { key: "WPS会员", aliases: ["wps", "金山办公"], category: "网盘办公", typicalMonthly: 20, channel: "支付宝", alt: "日常看文档用免费版就够" },
   { key: "扫描全能王", aliases: ["扫描全能王", "camscanner"], category: "网盘办公", typicalMonthly: 30, channel: "苹果 iOS", alt: "苹果备忘录或微信扫一扫可免费扫描" },
-  { key: "苹果云空间", aliases: ["icloud", "apple.com/bill", "苹果云"], category: "网盘办公", typicalMonthly: 21, channel: "苹果 iOS", alt: "定期导出老照片到电脑，可降档省钱" },
-  { key: "美团神会员", aliases: ["美团", "神会员", "外卖会员"], category: "外卖生活", typicalMonthly: 15, channel: "支付宝", alt: "每月点外卖少于 4 次反而不划算" },
-  { key: "饿了么吃货卡", aliases: ["饿了么", "淘宝闪购"], category: "外卖生活", typicalMonthly: 15, channel: "支付宝", alt: "和美团外卖会员留一个就行" },
-  { key: "高德打车卡", aliases: ["高德", "打车卡", "滴滴"], category: "出行工具", typicalMonthly: 19, channel: "支付宝", alt: "打车多的月份再买单次券包" },
+  { key: "苹果云空间 iCloud", aliases: ["icloud", "云上贵州", "apple.com/bill", "苹果云"], category: "网盘办公", typicalMonthly: 6, channel: "苹果 iOS", alt: "50GB ¥6/月属常用刚需；200GB 以上可定期导出老照片降档" },
+  { key: "美团神会员", aliases: ["美团神会员", "美团外卖会员", "神会员", "美团省钱包"], category: "外卖生活", typicalMonthly: 15, channel: "支付宝", alt: "每月点外卖少于 4 次反而不划算" },
+  { key: "饿了么吃货卡", aliases: ["饿了么吃货卡", "超级吃货卡", "闪购省钱包"], category: "外卖生活", typicalMonthly: 15, channel: "支付宝", alt: "和美团外卖会员留一个就行" },
+  { key: "水电燃气自动缴费", aliases: ["电费自动缴费", "水费自动缴费", "燃气自动缴费", "国网"], category: "生活自动缴费", typicalMonthly: 100, channel: "支付宝", alt: "家庭水电燃气自动缴费属正常刚需，核对户号无误即可保留" },
+  { key: "火山引擎云服务", aliases: ["火山引擎"], category: "云与 AI 服务", typicalMonthly: 49.9, channel: "支付宝", alt: "核对是否仍有在跑实例或套餐包，不用记得释放防持续扣费" },
+  { key: "高德打车卡", aliases: ["高德打车卡", "打车省钱卡", "滴滴省钱卡"], category: "出行工具", typicalMonthly: 19, channel: "支付宝", alt: "打车多的月份再买单次券包" },
   { key: "Keep会员", aliases: ["keep"], category: "运动健康", typicalMonthly: 19, channel: "苹果 iOS", alt: "一个月没练过就可以先关掉" },
   { key: "知乎盐选", aliases: ["知乎", "盐选"], category: "阅读知识", typicalMonthly: 19, channel: "支付宝", alt: "看完想看的故事记得立刻关续费" },
   { key: "番茄/七猫小说", aliases: ["番茄小说", "七猫", "起点"], category: "阅读知识", typicalMonthly: 18, channel: "支付宝", alt: "免费版也能看，没必要按月扣费" },
@@ -159,10 +161,16 @@ export function parseBillText(rawText, fxRate = USD_TO_CNY) {
   const parsed = [];
   let seq = 1;
 
-  // 路径 A：按真实支付宝/微信 CSV 结构解析
+  // 路径 A：按真实支付宝（GB18030 官方电子回单）/ 微信支付 CSV 结构精准解析
   if (headerIdx >= 0 && colMap) {
     const isWechatFile = rawText.includes("微信支付账单");
+    const catIdx = splitCsvLine(lines[headerIdx]).findIndex((c) => /交易分类/.test(c));
     const merchantHistory = new Map();
+    const NON_SUB_CATS = new Set(["餐饮美食", "交通出行", "爱车养车", "医疗健康", "转账红包", "住房物业"]);
+    const NON_SUB_PRODUCT_RE = /外卖订单|点餐订单|美团收银|收钱码|停车场|高速被扫|医保支付|一卡通充值|话费充值|超市|便利店|烧烤|牛肉汤|胡辣汤|云饺|淘宝闪购|拼多多平台商户/;
+    const EXPLICIT_SUB_RE = /会员服务|会员|vip|连续包|自动续费|自动缴费|订阅|免密|包月|包年|月卡|年卡|省钱卡|吃货卡|神会员|大会员|盐选|icloud|云上贵州/i;
+
+    let scannedExpenses = 0;
 
     for (let i = headerIdx + 1; i < lines.length; i++) {
       const cols = splitCsvLine(lines[i]);
@@ -174,51 +182,90 @@ export function parseBillText(rawText, fxRate = USD_TO_CNY) {
       const isUsd = amtRaw.includes("$");
       const val = Math.abs(parseFloat(amtRaw.replace(/[^0-9.]/g, "")));
       if (!val || isNaN(val)) continue;
+      scannedExpenses++;
       const amount = +(isUsd ? val * fxRate : val).toFixed(2);
 
-      const mName = cols[colMap.merchant] || "";
-      const pName = cols[colMap.product] || "";
+      const bizCat = catIdx >= 0 ? (cols[catIdx] || "").trim() : "";
+      const mName = (cols[colMap.merchant] || "").trim();
+      const pName = (cols[colMap.product] || "").trim();
       const combined = `${mName} ${pName}`.trim();
-      const meta = matchMerchantMeta(combined);
-      const looksLikeSub =
-        meta.category !== "其他订阅" ||
-        /会员|VIP|连续包|自动续费|订阅|免密|包月|包年|云空间|iCloud/i.test(combined);
-      const dateStr = (cols[colMap.time] || "").slice(0, 10).replace(/\//g, "-") || "2026-11-24";
-      const orderNo = colMap.orderNo >= 0 ? (cols[colMap.orderNo] || "").replace(/\t/g, "") : "";
-      const key = meta.category !== "其他订阅" ? meta.key : (mName || pName).slice(0, 18);
 
-      if (!merchantHistory.has(key)) {
-        merchantHistory.set(key, { key, combined, meta, looksLikeSub, records: [] });
+      const hasExplicitSubKw = EXPLICIT_SUB_RE.test(combined);
+      // 过滤外卖、点餐、停车、高速、医保、线下超市等日常消费，防止误报成订阅
+      if (!hasExplicitSubKw && (NON_SUB_CATS.has(bizCat) || NON_SUB_PRODUCT_RE.test(combined))) {
+        continue;
       }
-      merchantHistory.get(key).records.push({ amount, dateStr, orderNo, isUsd, rawLine: combined });
+
+      const meta = matchMerchantMeta(combined);
+      const isKnownSub = meta.category !== "其他订阅";
+      const dateStr = (cols[colMap.time] || "").slice(0, 10).replace(/\//g, "-") || "2026-11-24";
+      const orderNo = colMap.orderNo >= 0 ? (cols[colMap.orderNo] || "").replace(/\s+/g, "") : "";
+      const shortCorp = mName.replace(/(?:网络|信息|电子|数据)?科技有限公司$/, "").trim() || mName.slice(0, 14);
+      const displayName =
+        isKnownSub
+          ? meta.key
+          : /会员服务/.test(pName)
+          ? `${shortCorp}（会员服务）`
+          : shortCorp.slice(0, 18);
+
+      if (!merchantHistory.has(displayName)) {
+        merchantHistory.set(displayName, {
+          displayName,
+          combined,
+          meta,
+          bizCat,
+          hasExplicitSubKw,
+          isKnownSub,
+          records: [],
+        });
+      }
+      merchantHistory.get(displayName).records.push({ amount, dateStr, orderNo, isUsd, pName });
     }
 
     for (const entry of merchantHistory.values()) {
-      // 保留已知订阅/含会员关键词的记录，或同一商户出现 >=2 次的周期性扣款
-      if (!entry.looksLikeSub && entry.records.length < 2) continue;
       entry.records.sort((a, b) => b.dateStr.localeCompare(a.dateStr));
+      // 计算是否跨月定期扣款（避免同一天连买两单普通商品误判）
+      const distinctMonths = new Set(entry.records.map((r) => r.dateStr.slice(0, 7))).size;
+      const isCrossMonthRecurring = entry.records.length >= 2 && distinctMonths >= 2;
+      if (!entry.hasExplicitSubKw && !entry.isKnownSub && !isCrossMonthRecurring) continue;
+      // 非已知商户且无会员词时，仅当跨月且金额近似或相同才算周期订阅
+      if (!entry.hasExplicitSubKw && !entry.isKnownSub && isCrossMonthRecurring) {
+        const a0 = entry.records[0].amount;
+        const a1 = entry.records[1].amount;
+        if (Math.abs(a0 - a1) > Math.max(a0, a1) * 0.5 && a1 > 5) continue;
+      }
+
       const latest = entry.records[0];
       const prev = entry.records[1] || latest;
-      const cycle = /包年|年费|\/年|annual/i.test(entry.combined) ? "yearly" : /包季|\/季/i.test(entry.combined) ? "quarterly" : "monthly";
+      const cycle = /包年|年费|\/年|annual/i.test(entry.combined)
+        ? "yearly"
+        : /包季|\/季/i.test(entry.combined)
+        ? "quarterly"
+        : "monthly";
       const channel = isWechatFile
         ? "微信"
-        : /apple|icloud/i.test(entry.combined)
+        : /apple|icloud|云上贵州/i.test(entry.combined)
         ? "苹果 iOS"
         : latest.isUsd
         ? "其他"
         : "支付宝";
 
+      const isUtility = entry.meta.category === "生活自动缴费";
+      const isConsistentSmallCloud = /icloud|云上贵州/i.test(entry.combined) && latest.amount <= 12;
+
       parsed.push({
         id: `csv-${Date.now()}-${seq++}`,
-        merchant: entry.key,
-        category: entry.meta.category,
+        merchant: entry.displayName,
+        category: entry.meta.category !== "其他订阅" ? entry.meta.category : entry.bizCat || "会员订阅",
         channel,
         amount: latest.amount,
         prevAmount: prev.amount,
         cycle,
         lastDate: latest.dateStr,
-        usedDays30: 3,
+        chargeCount: entry.records.length,
+        usedDays30: isUtility || isConsistentSmallCloud ? 30 : entry.records.length >= 2 ? 10 : 2,
         orderNo: latest.orderNo,
+        scannedExpenses,
       });
     }
     return parsed;

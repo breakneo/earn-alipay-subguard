@@ -257,8 +257,15 @@
         <button class="btn btn-sm" id="btnCloseExportGuide">关闭</button>
       </div>
       <div style="font-size:13.5px;display:flex;flex-direction:column;gap:12px;color:var(--ink-2);">
+        <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 12px;color:#1e3a8a;">
+          <strong>⚡ 支付宝里直接问阿宝：</strong>对阿宝说「帮我导出近 3 个月个人对账单」
+          <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="btn btn-primary btn-sm" id="btnCopyExportAbao">复制口令问阿宝</button>
+            <a class="btn btn-soft btn-sm" href="alipays://platformapi/startapp?appId=20000003" style="text-decoration:none;">手机端打开支付宝</a>
+          </div>
+        </div>
         <div>
-          <strong>支付宝账单：</strong>
+          <strong>支付宝手动导出：</strong>
           <div style="margin-top:4px;">打开支付宝 → 我的 → 账单 → 右上角「…」→ 开具交易流水证明 → 选「用于个人对账」导出发邮箱，解压后的 CSV 直接导入即可。</div>
         </div>
         <div>

@@ -288,59 +288,74 @@ async function main() {
       }
     };
 
-    // === 实操 1：打开干净的空白首页，直接粘贴真实扣费短信 ===
-    await setCaption("1 / 5", "首次打开：零假数据，3 种方式导入你自己的真实扣费记录");
-    await holdFrames(2.4);
-
-    await setCaption("2 / 5", "粘贴手机扣费短信：浏览器本地识别商户、金额与涨价幅度");
-    await clickSelector("#btnOpenSmsEmpty");
-    await holdFrames(0.8);
-    await typeInto(
-      "#billTextInput",
-      "【支付宝】2026-11-24 向爱奇艺自动扣款25元（首月1元，未使用）\n【支付宝】2026-11-23 向知乎盐选自动扣款19元（首月1元，未使用）\n【微信支付】2026-11-18 向腾讯视频自动续费30元"
-    );
-    await holdFrames(0.9);
-    await clickSelector("#btnParseBill");
+    // === 实操 1：打开零假数据首页，真实上传脱敏后的 142 笔官方支付宝季度 CSV 账单 ===
+    const realCsvPath = process.env.REAL_ALIPAY_CSV;
+    await setCaption("1 / 5", "打开即用：零假数据，支持直接导入官方支付宝 / 微信导出账单");
     await holdFrames(2.2);
 
-    // 勾选常用会员补充账本 + 点开退订路径 + 标记已退订实时减钱
-    await setCaption("2 / 5", "可继续勾选其他会员，并随时查看支付宝/微信精确关闭步骤");
+    if (realCsvPath && fs.existsSync(realCsvPath)) {
+      await setCaption("2 / 5", "实测导入真实支付宝季度 CSV（142 笔支出，已脱敏隐私字段）");
+      await moveToSelector(".entry-primary", 10);
+      await cdp.eval(`window.__clickVisual()`);
+      await captureFrame();
+      await cdp.send("DOM.enable");
+      const { root } = await cdp.send("DOM.getDocument", { depth: -1 });
+      const { nodeId } = await cdp.send("DOM.querySelector", {
+        nodeId: root.nodeId,
+        selector: "#csvFileInputEmpty",
+      });
+      await cdp.send("DOM.setFileInputFiles", { nodeId, files: [realCsvPath] });
+      await holdFrames(2.6);
+
+      await setCaption("2 / 5", "自动过滤 138 笔餐饮出行零售，精准提取 4 笔真实周期与会员扣款");
+      await holdFrames(2.4);
+    } else {
+      await setCaption("2 / 5", "粘贴手机扣费短信：浏览器本地识别商户、金额与涨价幅度");
+      await clickSelector("#btnOpenSmsEmpty");
+      await holdFrames(0.8);
+      await typeInto(
+        "#billTextInput",
+        "【支付宝】2026-11-24 向爱奇艺自动扣款25元（首月1元，未使用）\n【微信支付】2026-11-18 向腾讯视频自动续费30元"
+      );
+      await holdFrames(0.8);
+      await clickSelector("#btnParseBill");
+      await holdFrames(2.0);
+    }
+
+    // 点开「去退订」展示真·阿宝口令唤起与精确关闭步骤
+    await setCaption("2 / 5", "点「去退订」：一键复制口令问支付宝阿宝，或按精确步骤关闭免密");
     await clickSelector("[data-cancel-id]");
-    await holdFrames(2.0);
+    await holdFrames(2.4);
+    await clickSelector("#btnCopyAbaoCmd");
+    await holdFrames(1.0);
     await clickSelector("#btnCloseCancel");
     await holdFrames(0.6);
 
-    await setCaption("2 / 5", "退订后点「已退」，年度支出立即真实扣减并本地保存");
-    await clickSelector("[data-toggle-done]");
-    await holdFrames(1.8);
-
-    // === 实操 3：买前算账 + 真实生成手机日历提醒 ===
-    await setCaption("3 / 5", "买前算账：粘贴首月 1 元活动文案，算清一年真实花费");
-    await clickSelector('.tab-btn[data-tab="precheck"]');
-    await holdFrames(1.8);
-
-    await clickSelector('#promoPresets .tag-btn:nth-child(3)');
-    await holdFrames(2.2);
-
-    await setCaption("3 / 5", "点「加到手机日历提醒」，直接生成标准 .ics 日历文件");
-    await clickSelector("#btnDownloadIcs");
-    await holdFrames(1.6);
-
-    // === 实操 4：退费助手一键生成可直接发给支付宝/商家的沟通话术 ===
-    await setCaption("4 / 5", "退费助手：自动带入订单与渠道，一键复制发给支付宝或客服");
-    await clickSelector('.tab-btn[data-tab="appeal"]');
+    // 点「要退费」直达退费助手，自动带入真实识别出的会员订单
+    await setCaption("3 / 5", "点「要退费」自动带入订单：一键复制发给支付宝账单投诉或商家客服");
+    await clickSelector("[data-appeal-id]");
     await holdFrames(2.2);
     await clickSelector("#btnCopyAlipayScript");
     await holdFrames(1.6);
 
-    // === 实操 5：问阿宝直接发短信或促销文案，可选连接在线大模型 ===
-    await setCaption("5 / 5", "问阿宝：直接丢进活动文案或扣费短信，可按需连接在线大模型");
+    // === 实操 4：买前算账 + 真实生成 .ics 手机日历提醒 ===
+    await setCaption("4 / 5", "买前算账：开通前算清一年真实花费，避免首月低价陷阱");
+    await clickSelector('.tab-btn[data-tab="precheck"]');
+    await holdFrames(1.4);
+    await clickSelector('#promoPresets .tag-btn:nth-child(3)');
+    await holdFrames(2.0);
+    await setCaption("4 / 5", "点「加到手机日历提醒」，真实导出 .ics 日历文件到期前 48 小时响铃");
+    await clickSelector("#btnDownloadIcs");
+    await holdFrames(1.6);
+
+    // === 实操 5：问阿宝粘贴短信实时入账 + 展示可选大模型配置 ===
+    await setCaption("5 / 5", "问阿宝：直接丢进扣费短信实时记账，并支持接入国内大模型增强解读");
     await clickSelector('.tab-btn[data-tab="abao"]');
-    await holdFrames(1.0);
-    await clickSelector('#quickPrompts .tag-btn:nth-child(1)');
+    await holdFrames(0.8);
+    await clickSelector('#quickPrompts .tag-btn:nth-child(2)');
     await holdFrames(2.2);
     await clickSelector("#btnOpenLlmModal");
-    await holdFrames(2.0);
+    await holdFrames(1.8);
     await clickSelector("#btnCloseLlmModal");
     await holdFrames(1.0);
 

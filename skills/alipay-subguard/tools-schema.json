@@ -1,66 +1,104 @@
 {
+  "schema_version": "1.1.0",
   "skill_name": "alipay-subguard",
-  "display_name": "生活好帮手+订阅刺客体检仪",
-  "version": "1.0.0",
-  "ecosystem": "Alipay Abao (支付宝阿宝)",
-  "privacy_mode": "on-device-first",
+  "display_name": "订阅刺客体检仪（支付宝阿宝生态技能）",
+  "alipay_ecosystem_alignment": {
+    "compatible_spec": "ant-mini-program/alipay-ai-skills & Alipay Open Platform MCP",
+    "mapped_open_apis": [
+      "alipay.data.dataservice.bill.downloadurl.query",
+      "alipay.user.agreement.query",
+      "alipay.user.agreement.unsign"
+    ],
+    "local_bill_csv_format": "支付宝交易明细(*.csv) / GB18030 / 12列标准电子客户回单"
+  },
+  "privacy_boundary": {
+    "default_execution": "on-device-browser-local",
+    "zero_cloud_upload": true,
+    "human_in_the_loop_required": [
+      "alipay.user.agreement.unsign",
+      "abao.dispute.submit_refund"
+    ]
+  },
   "tools": [
     {
-      "name": "abao_sync_recurring_bills",
-      "description": "经用户单次授权，只读拉取近 90 天支付宝周期性免密扣款摘要（演示 Web 版采用本地脱敏沙盒 + 本地 CSV/短信离线解析，接入阿宝后直连支付宝账单开放能力）。",
-      "requires_user_confirmation": true,
-      "parameters": {
+      "name": "alipay.data.dataservice.bill.downloadurl.query",
+      "alias": "subguard.parse_alipay_csv",
+      "description": "对齐支付宝开放平台账单标准：接入阿宝后按授权读取周期账单，独立端则纯本地解析官方导出的 GB18030《支付宝交易明细》CSV，过滤日常餐饮出行并聚合多月周期扣款。",
+      "input_schema": {
         "type": "object",
         "properties": {
-          "window_days": { "type": "integer", "default": 90 },
-          "persona_sandbox": { "type": "string", "enum": ["worker", "elder", "developer"] }
-        }
-      }
+          "bill_type": { "type": "string", "enum": ["trade", "personal_recurring_csv"] },
+          "bill_date": { "type": "string", "description": "账单日期或月份，如 2026-11" },
+          "raw_csv_text": { "type": "string", "description": "本地读取的官方支付宝/微信 CSV 文本（仅端侧处理）" }
+        },
+        "required": ["bill_type"]
+      },
+      "requires_user_confirmation": false
     },
     {
-      "name": "subguard_precheck_offer",
-      "description": "在用户浏览会员/订阅付费页唤起阿宝时，实时拆解首月低价涨价倍率、首年真实成本及与现有支付宝订阅的重叠冲突。",
-      "requires_user_confirmation": false,
-      "parameters": {
+      "name": "alipay.user.agreement.query",
+      "alias": "subguard.audit_subscriptions",
+      "description": "对齐支付宝个人代扣协议查询接口字段：检查有效免密/连续包月协议，识别首期低价暴涨、同类重复与沉睡扣费，保留水电燃气等刚需自动缴费。",
+      "input_schema": {
         "type": "object",
-        "required": ["promo_text"],
+        "properties": {
+          "alipay_open_id": { "type": "string" },
+          "personal_product_code": { "type": "string", "default": "GENERAL_WITHHOLDING_P" },
+          "sign_scene": { "type": "string", "default": "INDUSTRY|DIGITAL_MEDIA" },
+          "external_agreement_no": { "type": "string" },
+          "agreement_no": { "type": "string" }
+        }
+      },
+      "requires_user_confirmation": false
+    },
+    {
+      "name": "subguard.precheck_offer",
+      "description": "买前算账：算清首月低价活动背后的首年真实总支出、涨价倍数与已有订阅重叠，并生成标准 RFC 5545 (.ics) 续费前 48 小时手机日历提醒。",
+      "input_schema": {
+        "type": "object",
         "properties": {
           "service_name": { "type": "string" },
           "promo_text": { "type": "string" },
-          "first_price_cny": { "type": "number" },
-          "renew_price_cny": { "type": "number" },
+          "first_price": { "type": "number" },
+          "renew_price": { "type": "number" },
           "cycle": { "type": "string", "enum": ["monthly", "quarterly", "yearly"] }
         }
-      }
+      },
+      "requires_user_confirmation": false
     },
     {
-      "name": "subguard_audit_subscriptions",
-      "description": "对账单周期扣款执行红/黄/绿三色止血体检，计算年度可立省金额与 3 年复利止损额。",
-      "requires_user_confirmation": false,
-      "parameters": {
+      "name": "alipay.user.agreement.unsign",
+      "description": "【强制本人二次确认】对齐支付宝个人代扣协议解约标准：在用户明确确认后解除指定免密协议；独立网页端提供一键复制阿宝指令与精确客户端关闭路径。",
+      "input_schema": {
         "type": "object",
-        "required": ["items"],
         "properties": {
-          "items": { "type": "array", "items": { "type": "object" } }
-        }
-      }
+          "alipay_open_id": { "type": "string" },
+          "agreement_no": { "type": "string" },
+          "personal_product_code": { "type": "string", "default": "GENERAL_WITHHOLDING_P" },
+          "sign_scene": { "type": "string" },
+          "third_party_type": { "type": "string", "default": "PARTNER" },
+          "user_confirmed": { "type": "boolean" }
+        },
+        "required": ["agreement_no", "user_confirmed"]
+      },
+      "requires_user_confirmation": true
     },
     {
-      "name": "abao_prepare_refund_appeal",
-      "description": "针对误扣/静默自动续费订单，依据《网络交易监督管理办法》第 18 条生成追回胜率评估、支付宝投诉举证包，并在用户二次确认后触发解约免密与提交申诉。",
-      "requires_user_confirmation": true,
-      "parameters": {
+      "name": "subguard.draft_refund_appeal",
+      "description": "参照《网络交易监督管理办法》第十八条生成自助退费沟通参考模板（明确标注仅供参考，不构成法律意见）。",
+      "input_schema": {
         "type": "object",
-        "required": ["merchant", "amount", "last_date"],
         "properties": {
           "merchant": { "type": "string" },
           "amount": { "type": "number" },
-          "last_date": { "type": "string" },
-          "order_no": { "type": "string" },
+          "out_trade_no": { "type": "string" },
+          "within_7_days": { "type": "boolean" },
           "unused_after_renew": { "type": "boolean" },
           "no_advance_notice": { "type": "boolean" }
-        }
-      }
+        },
+        "required": ["merchant", "amount"]
+      },
+      "requires_user_confirmation": false
     }
   ]
 }
