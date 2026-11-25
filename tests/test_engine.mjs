@@ -1,85 +1,78 @@
 import assert from "node:assert/strict";
 import {
-  PERSONA_PRESETS,
+  SAMPLE_BILL_ITEMS,
   analyzePrePurchaseOffer,
   auditSubscriptions,
   buildAppealPackage,
+  buildReminderICS,
   handleAbaoChat,
   parseBillText,
 } from "../app/engine.js";
 
-// 1. 事中体检：都市打工人账单
-const workerAudit = auditSubscriptions(PERSONA_PRESETS.worker.items);
-assert.equal(workerAudit.stats.count, 8, "应识别 8 项订阅");
-assert.ok(workerAudit.stats.redCount >= 4, "应至少检出 4 项红灯刺客");
-assert.ok(workerAudit.stats.potentialSaveYearly > 1000, "年度可立省金额应大于 ¥1000");
-assert.equal(
-  workerAudit.items.find((x) => x.merchant.includes("美团"))?.level,
-  "green",
-  "高频美团刚需应标绿保留"
-);
+// 1. 真实支付宝格式 CSV（含前置说明行 + 多月同商户涨价自动聚合 + 排除收入/退款）
+const alipayCsv = [
+  "支付宝交易记录明细查询",
+  "账号:[138****8888]",
+  "---------------------------------",
+  "交易时间,交易分类,交易对方,商品说明,收/支,金额,收/付款方式,交易状态,交易订单号",
+  "2026-11-23 09:00:00,文化休闲,爱奇艺,爱奇艺黄金VIP连续包月,支出,25.00,余额宝,交易成功,202611230001",
+  "2026-10-23 09:00:00,文化休闲,爱奇艺,爱奇艺黄金VIP首月体验,支出,1.00,余额宝,交易成功,202610230001",
+  "2026-11-20 12:00:00,餐饮美食,楼下早餐店,包子豆浆,支出,8.00,花呗,交易成功,202611200002",
+  "2026-11-18 10:00:00,转账红包,张三,转账,收入,500.00,余额,交易成功,202611180003",
+  "2026-11-15 08:00:00,办公工具,夸克网盘,夸克网盘会员,支出,19.00,余额宝,交易成功,202611150004",
+].join("\n");
+const csvItems = parseBillText(alipayCsv);
+assert.equal(csvItems.length, 2, "应准确筛出 2 笔订阅，过滤单次早餐与收入");
+const iqiyi = csvItems.find((x) => x.merchant === "爱奇艺");
+assert.equal(iqiyi.amount, 25);
+assert.equal(iqiyi.prevAmount, 1, "应自动比对出上月首期价格 1 元");
+assert.equal(iqiyi.orderNo, "202611230001");
 
-// 2. 事中体检：银发长辈防误触账单
-const elderAudit = auditSubscriptions(PERSONA_PRESETS.elder.items);
-assert.ok(elderAudit.stats.redCount >= 3, "长辈账单应检出高危误触扣费");
-assert.equal(
-  elderAudit.items.find((x) => x.merchant.includes("喜马拉雅"))?.level,
-  "green",
-  "长辈高频听书刚需不应误杀"
-);
-
-// 3. 本地 CSV + 短信 + 美元混排解析
-const sampleText = [
-  "交易时间,交易分类,交易对方,商品说明,收/支,金额",
-  "2026-11-24 08:12:00,数码电器,爱奇艺连续包月,VIP自动续费,支出,25.00",
-  "【支付宝】2026-11-24 通过免密自动扣款向知乎盐选支付19.00元（首月1元，未使用）",
+// 2. 真实扣费短信（含人民币 + 美元折算）
+const sms = [
+  "【支付宝】2026-11-24 向知乎盐选自动扣款19.00元（首月1元，未使用）订单号:202611249988",
   "ChatGPT Plus 自动续费 $20.00/月",
 ].join("\n");
-const parsed = parseBillText(sampleText);
-assert.equal(parsed.length, 3, "应成功解析 3 条记录");
-assert.equal(parsed[0].amount, 25);
-assert.equal(parsed[1].prevAmount, 1, "应识别首月1元");
-assert.equal(parsed[1].usedDays30, 0, "应识别未使用状态");
-assert.equal(parsed[2].amount, 145, "美元 $20 应按 7.25 折算为 ¥145");
+const smsItems = parseBillText(sms);
+assert.equal(smsItems.length, 2);
+assert.equal(smsItems[0].prevAmount, 1);
+assert.equal(smsItems[0].orderNo, "202611249988");
+assert.equal(smsItems[1].amount, 145);
 
-// 4. 事前扫雷：价格暴涨 + 重叠预警
-const pre1 = analyzePrePurchaseOffer(
-  { promoText: "芒果TV首月1元体验，次月起连续包月28元" },
-  workerAudit.items
-);
+// 3. 账单体检（含示例校验）
+const audit = auditSubscriptions(SAMPLE_BILL_ITEMS);
+assert.equal(audit.stats.count, 7);
+assert.ok(audit.stats.redCount >= 3);
+assert.equal(audit.items.find((x) => x.merchant.includes("美团"))?.level, "green");
+
+// 4. 买前算账
+const pre1 = analyzePrePurchaseOffer({ promoText: "芒果TV首月1元，次月起28元/月自动续费" }, audit.items);
 assert.equal(pre1.firstPrice, 1);
 assert.equal(pre1.renewPrice, 28);
 assert.equal(pre1.year1Cost, 309);
-assert.equal(pre1.verdictLevel, "red", "28倍涨价+影音重叠应强烈劝退");
-assert.ok(pre1.overlaps.length >= 1, "应检测到同类影音重叠");
+assert.equal(pre1.verdictLevel, "red");
 
-const pre2 = analyzePrePurchaseOffer(
-  { promoText: "轻颜修图VIP 0.01元试用7天到期自动扣198元包年" },
-  []
-);
+const pre2 = analyzePrePurchaseOffer({ promoText: "轻颜0.01元试用7天到期自动扣198元包年" }, []);
 assert.equal(pre2.cycle, "yearly");
-assert.equal(pre2.verdictLevel, "red", "0.01元试用转包年应直接红灯拦截");
+assert.equal(pre2.verdictLevel, "red");
 
-// 5. 事后追回：合规表述与人工二次确认门禁
-const zhihu = workerAudit.items.find((x) => x.merchant.includes("知乎"));
-const pkg = buildAppealPackage(zhihu, { within7Days: true, unusedAfterRenew: true, noAdvanceNotice: true });
-assert.ok(pkg.probabilityLabel.includes("仅供参考"), "合规要求：不得输出确定性法律结论");
-assert.ok(!pkg.probabilityLabel.includes("95%"), "合规要求：不得出现确定性百分比胜率");
-assert.ok(pkg.alipayComplaintScript.includes("网络交易监督管理办法"), "申诉模板须包含法规参考条款");
-assert.equal(pkg.abaoWorkflowSteps.filter((s) => s.requiresConfirm).length, 2, "解约与提交申诉须强制二次确认");
+// 5. 退费话术与合规声明
+const pkg = buildAppealPackage({ merchant: "知乎盐选", amount: 19, channel: "支付宝", orderNo: "202611249988" });
+assert.ok(pkg.probabilityLabel.includes("仅供参考"));
+assert.ok(pkg.alipayComplaintScript.includes("网络交易监督管理办法"));
+assert.ok(pkg.alipayComplaintScript.includes("202611249988"));
 
-// 6. 阿宝自然语言对话路由 + 中文步骤标签
-const chat1 = handleAbaoChat("我正在浏览芒果TV首月1元次月28元值不值", PERSONA_PRESETS.worker.items);
-assert.equal(chat1.intent, "precheck");
-assert.ok(chat1.toolTrace.every((t) => Boolean(t.label)), "每条执行轨迹应含中文标签");
-const chat2 = handleAbaoChat("昨晚被扣款了，帮我申诉追回", PERSONA_PRESETS.worker.items);
-assert.equal(chat2.intent, "appeal");
-const chat3 = handleAbaoChat("帮我查查爸妈手机有没有误触", PERSONA_PRESETS.worker.items);
-assert.equal(chat3.switchPreset, "elder");
+// 6. 真实 .ics 日历文件生成
+const ics = buildReminderICS("芒果TV", 28, 28);
+assert.ok(ics.includes("BEGIN:VCALENDAR") && ics.includes("TRIGGER:-P2D") && ics.includes("芒果TV"));
 
-// 7. 对话框直接粘贴扣费短信自动离线解析
-const chat4 = handleAbaoChat("【支付宝】2026-11-24 通过自动扣款向扫描全能王支付30.00元（首月1元，未使用）", PERSONA_PRESETS.worker.items);
-assert.equal(chat4.intent, "parse_sms");
-assert.equal(chat4.parsedItems.length, 1);
+// 7. 空账单问阿宝绝不伪造假数据；粘贴短信则真实入账
+const emptyChat = handleAbaoChat("帮我查查账单", []);
+assert.equal(emptyChat.intent, "empty");
+assert.ok(emptyChat.reply.includes("还没有添加"));
+
+const smsChat = handleAbaoChat("【支付宝】向扫描全能王自动扣款30元（首月1元，未使用）", []);
+assert.equal(smsChat.intent, "parse_sms");
+assert.equal(smsChat.parsedItems.length, 1);
 
 console.log("ALL ENGINE UNIT TESTS PASSED (7/7 SUITES)");

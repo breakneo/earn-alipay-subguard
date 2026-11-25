@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-  <title>订阅刺客体检仪 · 支付宝阿宝助手</title>
+  <title>订阅体检仪 · 查清每月自动扣款</title>
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
@@ -11,152 +11,125 @@
     <div class="topbar-inner">
       <div class="brand">
         <div class="brand-logo">保</div>
-        <div class="brand-title">订阅刺客体检仪</div>
-        <span class="pill pill-green" id="engineStatusPill">🔒 本地离线</span>
+        <div class="brand-title">订阅体检仪</div>
       </div>
       <div class="top-actions">
-        <button class="btn btn-sm" id="btnOpenLlmModal">🤖 模型</button>
-        <button class="btn btn-sm" id="btnExportReport">📤 导出</button>
+        <button class="btn btn-sm" id="btnOpenLlmModal">AI 设置</button>
+        <button class="btn btn-sm" id="btnExportReport">复制清单</button>
       </div>
     </div>
   </header>
 
   <main class="container">
-    <!-- 极简状态条：1 秒看清核心省钱数 + 快速切换演示人物 -->
-    <section class="summary-strip">
-      <div class="summary-nums" id="topSummaryStrip"></div>
-      <div class="preset-pills" id="presetBar">
-        <span class="preset-label">模拟账单：</span>
-        <button class="chip-btn active" data-preset="worker">打工人</button>
-        <button class="chip-btn" data-preset="elder">长辈</button>
-        <button class="chip-btn" data-preset="developer">工具达人</button>
-      </div>
-    </section>
-
-    <!-- 极简单行四标签（像真手机 App） -->
     <nav class="tabs" role="tablist">
-      <button class="tab-btn active" data-tab="abao">💬 问阿宝</button>
-      <button class="tab-btn" data-tab="audit">🩺 查账单</button>
-      <button class="tab-btn" data-tab="precheck">🛡️ 买前扫雷</button>
-      <button class="tab-btn" data-tab="appeal">⚖️ 申诉退费</button>
+      <button class="tab-btn active" data-tab="audit">查账单</button>
+      <button class="tab-btn" data-tab="precheck">买前算账</button>
+      <button class="tab-btn" data-tab="appeal">退费助手</button>
+      <button class="tab-btn" data-tab="abao">问阿宝</button>
     </nav>
 
-    <!-- 1. 问阿宝（单栏极简对话体验） -->
-    <section class="panel active" id="panel-abao">
-      <div class="card chat-card">
-        <div class="quick-prompts" id="quickPrompts">
-          <button class="btn btn-soft btn-sm" data-q="阿宝，帮我拉取近 90 天支付宝账单，查查有哪些自动续费刺客">🔍 查近90天刺客</button>
-          <button class="btn btn-soft btn-sm" data-q="芒果TV首月1元体验、次月起连续包月28元，帮我扫雷值不值？">🛡️ 首月1元值不值</button>
-          <button class="btn btn-soft btn-sm" data-q="帮我查查爸妈手机有没有误开的清理大师免密扣款">👴 帮爸妈排雷</button>
-          <button class="btn btn-soft btn-sm" data-q="昨晚被知乎盐选静默扣了19元没用过，帮我整理申诉">⚖️ 昨晚误扣追回</button>
+    <!-- 1. 查账单（默认首页：无假数据，真实导入/记录） -->
+    <section class="panel active" id="panel-audit">
+      <!-- 空态：首次打开只呈现最清晰的 3 个真实入口 -->
+      <div class="card empty-card" id="emptyStateCard">
+        <h1 class="empty-title">查查每月被悄悄扣了多少钱</h1>
+        <p class="empty-sub">账单只在你的设备里算，不上传云端</p>
+
+        <div class="entry-grid">
+          <label class="entry-btn entry-primary">
+            <span class="entry-icon">📂</span>
+            <strong>导入支付宝 / 微信账单</strong>
+            <small>选择导出的 CSV 表格自动识别</small>
+            <input type="file" id="csvFileInputEmpty" accept=".csv,.txt" style="display:none;" />
+          </label>
+          <button class="entry-btn" id="btnOpenSmsEmpty">
+            <span class="entry-icon">💬</span>
+            <strong>粘贴扣费短信</strong>
+            <small>把银行、支付宝或微信扣费通知粘进来</small>
+          </button>
+          <button class="entry-btn" id="btnOpenPickEmpty">
+            <span class="entry-icon">✓</span>
+            <strong>勾选正在用的会员</strong>
+            <small>10 秒勾出视频、网盘、音乐等会员</small>
+          </button>
         </div>
 
-        <div class="chat-stream" id="chatStream"></div>
-
-        <div class="chat-input-row">
-          <input class="input" id="chatInput" placeholder="说句话、贴促销文案，或直接粘扣费短信..." />
-          <button class="btn btn-primary" id="btnSendChat">发送</button>
+        <div class="empty-foot">
+          <button class="link-btn" id="btnHowExport">怎么导出支付宝/微信账单？</button>
+          <span style="color:#cbd5e1;">·</span>
+          <button class="link-btn" id="btnLoadSample">手头没账单，先看一份示例</button>
         </div>
       </div>
-    </section>
 
-    <!-- 2. 查账单 -->
-    <section class="panel" id="panel-audit">
-      <div class="grid-3" style="margin-bottom:14px;" id="kpiGrid"></div>
-
-      <!-- 极简导入操作栏（点击才展开输入框，默认清爽不占地） -->
-      <div class="card" style="margin-bottom:14px;padding:14px 16px;">
-        <div class="import-bar">
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-            <label class="btn btn-soft btn-sm" style="cursor:pointer;">
-              📂 导入账单 CSV
+      <!-- 有真实数据后展示 -->
+      <div id="auditContent" style="display:none;">
+        <div class="summary-bar" id="summaryBar">
+          <div class="summary-nums" id="summaryNums"></div>
+          <div class="summary-ops">
+            <label class="btn btn-sm btn-ghost-light" style="cursor:pointer;">
+              导入CSV
               <input type="file" id="csvFileInput" accept=".csv,.txt" style="display:none;" />
             </label>
-            <button class="btn btn-sm" id="btnToggleSms">📋 粘贴扣费短信</button>
-            <button class="btn btn-sm" id="btnToggleCatalog">✓ 勾选常见订阅</button>
-            <button class="btn btn-sm" id="btnOpenAbaoSync">⚡ 阿宝同步演示</button>
-          </div>
-          <span class="pill pill-blue" id="sourceBadge">打工人（模拟）</span>
-        </div>
-
-        <div id="smsDrawer" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
-          <textarea id="billTextInput" rows="3" placeholder="粘贴支付宝/微信扣费短信（支持 ¥ 与 $），每行一条..."></textarea>
-          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px;">
-            <button class="btn btn-sm" id="btnFillSmsDemo">填入示例短信</button>
-            <button class="btn btn-primary btn-sm" id="btnParseBill">立即本地解析</button>
+            <button class="btn btn-sm btn-ghost-light" id="btnOpenAddModal">+ 记一笔</button>
+            <button class="btn btn-sm btn-ghost-light" id="btnClearAll">清空</button>
           </div>
         </div>
 
-        <div id="catalogDrawer" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-            <strong style="font-size:13px;">勾选正在扣费的订阅</strong>
-            <button class="btn btn-primary btn-sm" id="btnApplyCatalog">加入体检</button>
-          </div>
-          <div class="catalog-grid" id="catalogGrid"></div>
+        <div class="sample-banner" id="sampleBanner" style="display:none;">
+          <span>当前查看的是示例账单</span>
+          <button class="link-btn" id="btnExitSample">清空并导入我自己的账单</button>
         </div>
-      </div>
 
-      <div class="audit-main">
-        <div class="card">
-          <div class="sec-title" style="margin-bottom:10px;">
-            <span>止血清单</span>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;" id="filterBar">
-              <button class="btn btn-sm btn-primary" data-filter="all">全部</button>
-              <button class="btn btn-sm" data-filter="red">🔴 止血</button>
-              <button class="btn btn-sm" data-filter="yellow">🟡 降级</button>
-              <button class="btn btn-sm" data-filter="green">🟢 保留</button>
+        <div class="audit-main">
+          <div class="card">
+            <div class="sec-title" style="margin-bottom:10px;">
+              <span>我的自动扣款</span>
+              <div style="display:flex;gap:5px;flex-wrap:wrap;" id="filterBar">
+                <button class="btn btn-sm btn-primary" data-filter="all">全部</button>
+                <button class="btn btn-sm" data-filter="red">建议退</button>
+                <button class="btn btn-sm" data-filter="yellow">可省钱</button>
+                <button class="btn btn-sm" data-filter="green">常用</button>
+              </div>
             </div>
+            <div class="sub-list" id="subList"></div>
           </div>
-          <div class="sub-list" id="subList"></div>
-        </div>
 
-        <div class="card donut-card">
-          <div class="sec-title" style="margin-bottom:10px;"><span>支出占比</span></div>
-          <div class="donut-wrap">
-            <div id="donutChart" style="width:170px;height:170px;flex-shrink:0;"></div>
-            <div id="categoryLegend" style="width:100%;display:flex;flex-direction:column;gap:7px;"></div>
+          <div class="card">
+            <div class="sec-title" style="margin-bottom:10px;"><span>钱花在哪了</span></div>
+            <div class="donut-wrap">
+              <div id="donutChart" style="width:166px;height:166px;flex-shrink:0;"></div>
+              <div id="categoryLegend" style="width:100%;display:flex;flex-direction:column;gap:7px;"></div>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- 3. 买前扫雷 -->
+    <!-- 2. 买前算账 -->
     <section class="panel" id="panel-precheck">
       <div class="grid-2">
         <div class="card">
-          <div class="sec-title" style="margin-bottom:10px;"><span>点选常见套路，或贴活动文案</span></div>
-          <div class="promo-cards" id="promoPresets">
-            <button class="promo-btn" data-name="芒果TV连续包月" data-first="1" data-renew="28" data-cycle="monthly" data-text="芒果TV首月1元体验，次月起自动连续包月28元">
-              <strong>🎬 芒果TV · 首月 ¥1 → ¥28</strong>
-              <span>28倍涨价 + 影音重叠</span>
-            </button>
-            <button class="promo-btn" data-name="轻颜修图VIP" data-first="0.01" data-renew="198" data-cycle="yearly" data-text="轻颜VIP 0.01元试用7天，到期自动扣费198元/年">
-              <strong>📸 轻颜 · ¥0.01 试用 → 年扣 ¥198</strong>
-              <span>高危试用转包年</span>
-            </button>
-            <button class="promo-btn" data-name="百度网盘超级会员" data-first="9" data-renew="25" data-cycle="monthly" data-text="百度网盘首月9元，次月起25元连续包月">
-              <strong>☁️ 百度网盘 · 首月 ¥9 → ¥25</strong>
-              <span>已有夸克功能重叠</span>
-            </button>
-            <button class="promo-btn" data-name="极速清理大师VIP" data-first="0.1" data-renew="29.9" data-cycle="monthly" data-text="清理大师0.1元体验，次月起29.9元/月自动扣款">
-              <strong>👴 清理大师 · ¥0.1 → ¥29.9/月</strong>
-              <span>长辈弹窗高危诱饵</span>
-            </button>
+          <div class="sec-title" style="margin-bottom:10px;"><span>开通前算清一年真实花费</span></div>
+          <textarea id="prePromoText" rows="3" placeholder="直接粘贴看到的会员活动文案（如：首月1元，次月起28元/月自动续费）"></textarea>
+
+          <div class="precheck-form-grid" style="margin-top:10px;">
+            <input class="input" id="preName" placeholder="服务名（选填）" />
+            <input class="input" id="preFirst" type="number" step="0.01" placeholder="首期¥" />
+            <input class="input" id="preRenew" type="number" step="0.01" placeholder="之后¥" />
+            <select id="preCycle">
+              <option value="monthly">按月</option>
+              <option value="quarterly">按季</option>
+              <option value="yearly">按年</option>
+            </select>
           </div>
 
-          <div style="display:flex;flex-direction:column;gap:10px;">
-            <textarea id="prePromoText" rows="2" placeholder="粘贴活动文案（如：首月1元，次月起28元/月自动续费）"></textarea>
-            <div class="precheck-form-grid">
-              <input class="input" id="preName" placeholder="服务名" />
-              <input class="input" id="preFirst" type="number" step="0.01" placeholder="首期¥" />
-              <input class="input" id="preRenew" type="number" step="0.01" placeholder="续费¥" />
-              <select id="preCycle">
-                <option value="monthly">按月</option>
-                <option value="quarterly">按季</option>
-                <option value="yearly">按年</option>
-              </select>
-            </div>
-            <button class="btn btn-primary" id="btnRunPrecheck">🛡️ 立即扫雷</button>
+          <button class="btn btn-primary" style="width:100%;margin-top:10px;" id="btnRunPrecheck">帮我算算</button>
+
+          <div class="quick-tags" id="promoPresets">
+            <span style="font-size:12px;color:var(--muted);">大家常查：</span>
+            <button class="tag-btn" data-name="芒果TV" data-first="1" data-renew="28" data-cycle="monthly" data-text="芒果TV首月1元，次月起28元/月自动续费">视频首月1元</button>
+            <button class="tag-btn" data-name="轻颜修图" data-first="0.01" data-renew="198" data-cycle="yearly" data-text="轻颜0.01元试用7天，到期自动扣198元包年">修图7天试用</button>
+            <button class="tag-btn" data-name="清理大师" data-first="0.1" data-renew="29.9" data-cycle="monthly" data-text="清理大师0.1元体验，次月29.9元/月">手机清理VIP</button>
           </div>
         </div>
 
@@ -164,72 +137,160 @@
       </div>
     </section>
 
-    <!-- 4. 申诉退费 -->
+    <!-- 3. 退费助手 -->
     <section class="panel" id="panel-appeal">
       <div class="grid-2">
         <div class="card">
-          <div class="sec-title" style="margin-bottom:10px;"><span>选择误扣订单</span></div>
-          <select id="appealSelect" style="margin-bottom:10px;"></select>
+          <div class="sec-title" style="margin-bottom:10px;"><span>填一下被扣的那笔账</span></div>
 
-          <div class="check-row">
-            <label><input type="checkbox" id="chk7d" checked /> 7日内扣款</label>
-            <label><input type="checkbox" id="chkUnused" checked /> 未用权益</label>
-            <label><input type="checkbox" id="chkNoNotice" checked /> 未收提前提醒</label>
-            <label><input type="checkbox" id="chkElder" /> 长辈误触</label>
+          <div id="appealSelectWrap" style="margin-bottom:10px;display:none;">
+            <select id="appealSelect"></select>
           </div>
 
-          <div id="appealWorkflow"></div>
+          <div class="appeal-inputs">
+            <input class="input" id="apMerchant" placeholder="商户名（如：知乎盐选）" />
+            <input class="input" id="apAmount" type="number" step="0.01" placeholder="扣了多少元" />
+            <select id="apChannel">
+              <option value="支付宝">支付宝扣的</option>
+              <option value="微信">微信扣的</option>
+              <option value="苹果 iOS">苹果手机扣的</option>
+              <option value="其他">银行卡/其他</option>
+            </select>
+            <input class="input" id="apOrderNo" placeholder="订单号（选填，账单里复制）" />
+          </div>
 
-          <button class="btn btn-primary" style="width:100%;margin-top:8px;" id="btnConfirmAppealExec">✅ 本人二次确认：解约免密并提交申诉（演示）</button>
+          <div class="check-row" style="margin-top:12px;">
+            <label><input type="checkbox" id="chk7d" checked /> 7天内扣的</label>
+            <label><input type="checkbox" id="chkUnused" checked /> 扣完没用过</label>
+            <label><input type="checkbox" id="chkNoNotice" checked /> 没收到提前提醒</label>
+            <label><input type="checkbox" id="chkElder" /> 家里长辈误点</label>
+          </div>
+
+          <div id="appealStatusCard" style="margin-top:10px;"></div>
         </div>
 
         <div class="card" id="appealScriptsPanel"></div>
       </div>
     </section>
 
+    <!-- 4. 问阿宝 -->
+    <section class="panel" id="panel-abao">
+      <div class="card chat-card">
+        <div class="chat-stream" id="chatStream"></div>
+
+        <div class="quick-prompts" id="quickPrompts">
+          <button class="tag-btn" data-q="芒果TV首月1元、次月28元值不值？">首月1元值不值？</button>
+          <button class="tag-btn" data-q="【支付宝】2026-11-24 向扫描全能王自动扣款30元（首月1元，未使用）">试着发一条扣费短信</button>
+          <button class="tag-btn" data-q="被悄悄续费扣款了怎么退费？">被误扣怎么退费？</button>
+        </div>
+
+        <div class="chat-input-row">
+          <input class="input" id="chatInput" placeholder="直接粘贴扣费短信、活动文案，或问阿宝..." />
+          <button class="btn btn-primary" id="btnSendChat">发送</button>
+        </div>
+      </div>
+    </section>
+
     <div class="footer-note">
-      <span>本地浏览器离线计算（0 字节上传）· 内置模拟账单仅供体验 · 维权模板仅供参考，不构成法律意见</span>
-      <span>作品编号 6ebc96914f8eab</span>
+      <span>本地计算不上传隐私 · 退费话术仅供参考，不构成法律意见</span>
     </div>
   </main>
 
-  <!-- 阿宝同步演示弹窗 -->
-  <div class="modal-backdrop" id="syncModal">
+  <!-- 添加 / 粘贴短信 / 勾选会员弹窗 -->
+  <div class="modal-backdrop" id="addModal">
     <div class="modal">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-        <strong style="font-size:16px;">⚡ 阿宝近 90 天账单同步（模拟样例）</strong>
-        <button class="btn btn-sm" id="btnCloseModal">关闭</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <strong style="font-size:16px;">添加你的订阅</strong>
+        <button class="btn btn-sm" id="btnCloseAddModal">关闭</button>
       </div>
-      <div style="display:flex;flex-direction:column;gap:8px;">
-        <button class="btn btn-soft" data-sync-preset="worker" style="justify-content:space-between;"><span>🧑‍💻 都市打工人（8项 · 首月暴涨与影音重叠）</span><strong>载入 →</strong></button>
-        <button class="btn btn-soft" data-sync-preset="elder" style="justify-content:space-between;"><span>👴 银发长辈（5项 · 弹窗诱导免密高发）</span><strong>载入 →</strong></button>
-        <button class="btn btn-soft" data-sync-preset="developer" style="justify-content:space-between;"><span>🚀 数字工具达人（5项 · 含美元订阅）</span><strong>载入 →</strong></button>
+      <div class="modal-tabs" id="addModeTabs">
+        <button class="chip-tab active" data-mode="sms">粘贴扣费短信</button>
+        <button class="chip-tab" data-mode="pick">勾选常见会员</button>
+        <button class="chip-tab" data-mode="manual">手动记一笔</button>
+      </div>
+
+      <div id="addPaneSms">
+        <textarea id="billTextInput" rows="4" placeholder="把手机收到的支付宝、微信或银行扣费短信直接粘进来，每行一条&#10;例：【支付宝】向爱奇艺自动扣款25元"></textarea>
+        <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+          <button class="btn btn-primary btn-sm" id="btnParseBill">识别并加入账单</button>
+        </div>
+      </div>
+
+      <div id="addPanePick" style="display:none;">
+        <div class="catalog-grid" id="catalogGrid"></div>
+        <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+          <button class="btn btn-primary btn-sm" id="btnApplyCatalog">把勾选的加入账单</button>
+        </div>
+      </div>
+
+      <div id="addPaneManual" style="display:none;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <input class="input" id="manName" placeholder="服务名（如：爱奇艺）" />
+          <input class="input" id="manAmount" type="number" step="0.01" placeholder="金额（元）" />
+          <select id="manCycle">
+            <option value="monthly">每月扣</option>
+            <option value="yearly">每年扣</option>
+            <option value="quarterly">每季扣</option>
+          </select>
+          <select id="manChannel">
+            <option value="支付宝">支付宝</option>
+            <option value="微信">微信</option>
+            <option value="苹果 iOS">苹果 iOS</option>
+            <option value="其他">银行卡/其他</option>
+          </select>
+        </div>
+        <label style="display:flex;align-items:center;gap:6px;margin-top:10px;font-size:13px;cursor:pointer;">
+          <input type="checkbox" id="manUnused" /> 最近一个月几乎没用过
+        </label>
+        <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+          <button class="btn btn-primary btn-sm" id="btnSaveManual">记入账单</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- 大模型增强弹窗 -->
+  <!-- 如何导出账单指引弹窗 -->
+  <div class="modal-backdrop" id="exportGuideModal">
+    <div class="modal">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <strong style="font-size:16px;">如何导出手机账单（约 30 秒）</strong>
+        <button class="btn btn-sm" id="btnCloseExportGuide">关闭</button>
+      </div>
+      <div style="font-size:13.5px;display:flex;flex-direction:column;gap:12px;color:var(--ink-2);">
+        <div>
+          <strong>支付宝账单：</strong>
+          <div style="margin-top:4px;">打开支付宝 → 我的 → 账单 → 右上角「…」→ 开具交易流水证明 → 选「用于个人对账」导出发邮箱，解压后的 CSV 直接导入即可。</div>
+        </div>
+        <div>
+          <strong>微信账单：</strong>
+          <div style="margin-top:4px;">打开微信 → 我 → 服务 → 钱包 → 右上角「账单」→ 常见问题 → 下载账单 → 选「用于个人对账」导出，解压后的 CSV 直接导入。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI 设置弹窗 -->
   <div class="modal-backdrop" id="llmModal">
     <div class="modal">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-        <strong style="font-size:16px;">🤖 大模型增强（可选，密钥仅存本地）</strong>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <strong style="font-size:16px;">连接在线大模型（可选）</strong>
         <button class="btn btn-sm" id="btnCloseLlmModal">关闭</button>
       </div>
       <div style="display:flex;flex-direction:column;gap:9px;font-size:13px;">
-        <label style="display:flex;align-items:center;gap:8px;font-weight:700;cursor:pointer;">
-          <input type="checkbox" id="llmEnabled" /> 开启大模型语义增强（失败自动回退本地引擎）
+        <label style="display:flex;align-items:center;gap:8px;font-weight:600;cursor:pointer;">
+          <input type="checkbox" id="llmEnabled" /> 开启更聪明的对话与长条款解读
         </label>
         <select id="llmProvider"></select>
         <input class="input" id="llmEndpoint" placeholder="接口地址" />
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <input class="input" id="llmModel" placeholder="模型名（如 qwen-plus）" />
-          <input class="input" id="llmApiKey" type="password" placeholder="密钥（代理可留空）" />
+          <input class="input" id="llmModel" placeholder="模型名称" />
+          <input class="input" id="llmApiKey" type="password" placeholder="密钥（仅存本机）" />
         </div>
         <div id="llmTestStatus" style="font-size:12px;color:var(--muted);min-height:16px;"></div>
         <div style="display:flex;justify-content:space-between;gap:8px;">
           <div style="display:flex;gap:6px;">
-            <button class="btn btn-sm" id="btnTestLlm">测连通</button>
-            <button class="btn btn-sm" id="btnClearLlm">清密钥</button>
+            <button class="btn btn-sm" id="btnTestLlm">测试连接</button>
+            <button class="btn btn-sm" id="btnClearLlm">清除密钥</button>
           </div>
           <button class="btn btn-primary btn-sm" id="btnSaveLlm">保存</button>
         </div>
@@ -237,7 +298,7 @@
     </div>
   </div>
 
-  <!-- 关闭免密指南弹窗 -->
+  <!-- 关闭自动扣款路径弹窗 -->
   <div class="modal-backdrop" id="cancelModal">
     <div class="modal" id="cancelModalBody"></div>
   </div>

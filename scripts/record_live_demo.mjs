@@ -288,74 +288,61 @@ async function main() {
       }
     };
 
-    // === 实操场景 1：开场展示 + 阿宝一句话查近 90 天账单 ===
-    await setCaption("实测 1 / 5", "打开网页直接运行：纯端侧离线解析 · 支持电脑与手机竖屏");
-    await holdFrames(2.2);
+    // === 实操 1：打开干净的空白首页，直接粘贴真实扣费短信 ===
+    await setCaption("1 / 5", "首次打开：零假数据，3 种方式导入你自己的真实扣费记录");
+    await holdFrames(2.4);
 
-    await setCaption("实测 1 / 5", "一句话唤起「阿宝 × 订阅保镖」扫描近 90 天自动续费刺客");
-    await clickSelector('#quickPrompts [data-q*="90"]');
-    await holdFrames(2.8);
-
-    // 实时打字查长辈防误触
-    await setCaption("实测 1 / 5", "自由口语提问：实时筛查爸妈手机里的误触免密扣款");
-    await typeInto("#chatInput", "帮我查查爸妈手机有没有误触免密");
-    await clickSelector("#btnSendChat");
-    await holdFrames(2.8);
-
-    // 切回打工人账单后进入事中体检
-    await clickSelector('[data-preset="worker"]');
-    await holdFrames(0.5);
-
-    // === 实测 2：事中账单体检 + 真实粘贴短信离线解析 + 关免密指引 ===
-    await setCaption("实测 2 / 5", "查账单：3 项核心数字 + 红黄绿止血清单，一眼看懂");
-    await clickSelector('.tab-btn[data-tab="audit"]');
-    await holdFrames(1.8);
-
-    await setCaption("实测 2 / 5", "粘贴扣费短信：浏览器本地秒解析并实时更新止血金额");
-    await clickSelector("#btnToggleSms");
-    await holdFrames(0.5);
-    await clickSelector("#btnFillSmsDemo");
+    await setCaption("2 / 5", "粘贴手机扣费短信：浏览器本地识别商户、金额与涨价幅度");
+    await clickSelector("#btnOpenSmsEmpty");
+    await holdFrames(0.8);
+    await typeInto(
+      "#billTextInput",
+      "【支付宝】2026-11-24 向爱奇艺自动扣款25元（首月1元，未使用）\n【支付宝】2026-11-23 向知乎盐选自动扣款19元（首月1元，未使用）\n【微信支付】2026-11-18 向腾讯视频自动续费30元"
+    );
     await holdFrames(0.9);
     await clickSelector("#btnParseBill");
-    await holdFrames(2.0);
-    await clickSelector("#btnToggleSms");
-    await holdFrames(0.5);
+    await holdFrames(2.2);
 
-    await setCaption("实测 2 / 5", "点开「关免密」：给出支付宝、微信、苹果精确解约路径");
-    await smoothScrollTo(240, 8);
-    await holdFrames(1.0);
+    // 勾选常用会员补充账本 + 点开退订路径 + 标记已退订实时减钱
+    await setCaption("2 / 5", "可继续勾选其他会员，并随时查看支付宝/微信精确关闭步骤");
     await clickSelector("[data-cancel-id]");
     await holdFrames(2.0);
     await clickSelector("#btnCloseCancel");
-    await holdFrames(0.5);
-    await smoothScrollTo(0, 8);
+    await holdFrames(0.6);
 
-    // === 实测 3：事前拦截买前扫雷 ===
-    await setCaption("实测 3 / 5", "事前拦截：浏览首月 1 元会员页前，3 秒拆穿 28 倍暴涨与同类重叠");
+    await setCaption("2 / 5", "退订后点「已退」，年度支出立即真实扣减并本地保存");
+    await clickSelector("[data-toggle-done]");
+    await holdFrames(1.8);
+
+    // === 实操 3：买前算账 + 真实生成手机日历提醒 ===
+    await setCaption("3 / 5", "买前算账：粘贴首月 1 元活动文案，算清一年真实花费");
     await clickSelector('.tab-btn[data-tab="precheck"]');
+    await holdFrames(1.8);
+
+    await clickSelector('#promoPresets .tag-btn:nth-child(3)');
     await holdFrames(2.2);
 
-    await setCaption("实测 3 / 5", "切换高危案例：识别 0.01 元试用转 198 元包年陷阱并强烈劝退");
-    await clickSelector('#promoPresets .promo-btn:nth-child(2)');
-    await holdFrames(2.5);
+    await setCaption("3 / 5", "点「加到手机日历提醒」，直接生成标准 .ics 日历文件");
+    await clickSelector("#btnDownloadIcs");
+    await holdFrames(1.6);
 
-    // === 实测 4：事后追回申诉 + 人工二次确认安全锁 ===
-    await setCaption("实测 4 / 5", "事后追回：对照法规自动整理支付宝投诉模板与客服退费参考话术");
+    // === 实操 4：退费助手一键生成可直接发给支付宝/商家的沟通话术 ===
+    await setCaption("4 / 5", "退费助手：自动带入订单与渠道，一键复制发给支付宝或客服");
     await clickSelector('.tab-btn[data-tab="appeal"]');
     await holdFrames(2.2);
+    await clickSelector("#btnCopyAlipayScript");
+    await holdFrames(1.6);
 
-    await smoothScrollTo(260, 10);
-    await setCaption("实测 4 / 5", "严格执行人工二次确认安全锁：本人核对后确认解约与提交申诉");
-    await clickSelector("#btnConfirmAppealExec");
-    await holdFrames(2.8);
-    await smoothScrollTo(0, 8);
-
-    // === 实测 5：双引擎真实大模型设置展示 ===
-    await setCaption("实测 5 / 5", "双引擎架构：默认端侧 0 字节上传，支持按需开启通义千问 / 豆包 / 深度求索");
+    // === 实操 5：问阿宝直接发短信或促销文案，可选连接在线大模型 ===
+    await setCaption("5 / 5", "问阿宝：直接丢进活动文案或扣费短信，可按需连接在线大模型");
+    await clickSelector('.tab-btn[data-tab="abao"]');
+    await holdFrames(1.0);
+    await clickSelector('#quickPrompts .tag-btn:nth-child(1)');
+    await holdFrames(2.2);
     await clickSelector("#btnOpenLlmModal");
-    await holdFrames(2.6);
+    await holdFrames(2.0);
     await clickSelector("#btnCloseLlmModal");
-    await holdFrames(1.2);
+    await holdFrames(1.0);
 
     ffmpeg.stdin.end();
     await new Promise((resolve, reject) => {
