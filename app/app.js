@@ -7,6 +7,16 @@ import {
   handleAbaoChat,
   parseBillText,
 } from "./engine.js";
+import {
+  LLM_PROVIDERS,
+  clearLlmConfig,
+  enhanceAbaoChatWithLLM,
+  extractOfferWithLLM,
+  isLlmActive,
+  loadLlmConfig,
+  saveLlmConfig,
+  testLlmConnection,
+} from "./llm.js";
 
 const state = {
   presetKey: "worker",
@@ -16,6 +26,7 @@ const state = {
   selectedAppealId: PERSONA_PRESETS.worker.items[5].id, // 默认选中知乎盐选昨晚误扣
   appealExecuted: false,
   precheckData: null,
+  llmConfig: loadLlmConfig(),
 };
 
 const $ = (sel) => document.querySelector(sel);
@@ -26,7 +37,7 @@ function showToast(msg) {
   el.textContent = msg;
   el.classList.add("show");
   clearTimeout(showToast._t);
-  showToast._t = setTimeout(() => el.classList.remove("show"), 2400);
+  showToast._t = setTimeout(() => el.classList.remove("show"), 2500);
 }
 
 async function copyText(txt, tip = "已复制到剪贴板") {
@@ -49,6 +60,22 @@ function switchTab(tabId) {
   $$(".panel").forEach((p) => p.classList.toggle("active", p.id === `panel-${tabId}`));
 }
 
+function updateEngineStatusUi() {
+  const active = isLlmActive(state.llmConfig);
+  const pill = $("#engineStatusPill");
+  const badge = $("#chatEngineBadge");
+  if (active) {
+    const pName = LLM_PROVIDERS[state.llmConfig.provider]?.name?.split("（")[0] || "大模型";
+    pill.textContent = `🤖 双引擎已开启 · ${pName} + 端侧精算`;
+    pill.className = "pill pill-blue";
+    badge.textContent = `大模型增强已开启 · ${state.llmConfig.model || pName}`;
+  } else {
+    pill.textContent = "🔒 端侧智能引擎 · 0 字节上传";
+    pill.className = "pill pill-green";
+    badge.textContent = "双引擎就绪 · 端侧离线优先";
+  }
+}
+
 function loadPreset(key, toastMsg) {
   const p = PERSONA_PRESETS[key];
   if (!p) return;
@@ -62,7 +89,7 @@ function loadPreset(key, toastMsg) {
   if (toastMsg) showToast(toastMsg);
 }
 
-/* ---------- Render Audit Dashboard ---------- */
+/* ---------- 渲染事中体检面板 ---------- */
 const COLORS = ["#1677ff", "#dc2626", "#f59e0b", "#059669", "#7c3aed", "#0ea5e9", "#64748b"];
 
 function renderDonut(byCategory, totalYearly) {
@@ -110,7 +137,7 @@ function renderAudit() {
   $("#abaoLiveSummary").innerHTML = `
     <div style="font-size:12.5px;color:var(--muted);margin-bottom:8px;">当前账单体检快照（${state.sourceLabel}）</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-      <div><div style="font-size:12px;color:var(--muted);">年度可立省</div><div style="font-size:22px;font-weight:800;color:var(--red);">¥${stats.potentialSaveYearly}</div></div>
+      <div><div style="font-size:12px;color:var(--muted);">年度预计可省</div><div style="font-size:22px;font-weight:800;color:var(--red);">¥${stats.potentialSaveYearly}</div></div>
       <div><div style="font-size:12px;color:var(--muted);">刺客分布</div><div style="font-size:15px;font-weight:800;padding-top:4px;">🔴 ${stats.redCount} &nbsp;🟡 ${stats.yellowCount} &nbsp;🟢 ${stats.greenCount}</div></div>
     </div>`;
 
@@ -133,7 +160,7 @@ function renderAudit() {
     <div class="card kpi" style="--bar:#d97706;--val-c:#b45309;">
       <div class="kpi-label">3 年累计止损（防温水煮青蛙）</div>
       <div class="kpi-val">¥${stats.threeYearDrain}</div>
-      <div class="kpi-foot">不关免密 3 年将静默流失的真金白银</div>
+      <div class="kpi-foot">不关免密 3 年将静默流失的资金</div>
     </div>`;
 
   renderDonut(audit.byCategory, stats.totalYearly);
@@ -164,7 +191,7 @@ function renderAudit() {
           <div class="sub-year">折合年支出 ¥${x.yearly}${x.saveYearly > 0 ? ` · 可省 <strong style="color:#059669;">¥${x.saveYearly}</strong>` : ""}</div>
           <div class="sub-btns">
             <button class="btn btn-sm" data-cancel-id="${x.id}">关免密路径</button>
-            ${x.level !== "green" ? `<button class="btn btn-primary btn-sm" data-appeal-id="${x.id}">一键申诉追回</button>` : ""}
+            ${x.level !== "green" ? `<button class="btn btn-primary btn-sm" data-appeal-id="${x.id}">整理申诉包</button>` : ""}
           </div>
         </div>
       </div>`
@@ -207,8 +234,8 @@ function openCancelModal(item) {
   $("#btnCopyCancel").onclick = () => copyText(`【${item.merchant}关闭免密步骤】\n${g.steps.map((s, i) => `${i + 1}. ${s}`).join("\n")}`, "已复制关闭步骤");
 }
 
-/* ---------- Render Pre-Purchase Interceptor ---------- */
-function renderPrecheck(res) {
+/* ---------- 渲染事前买前扫雷 ---------- */
+function renderPrecheck(res, llmTrap = "") {
   state.precheckData = res;
   const colors = {
     red: { vb: "#fecaca", vbg: "#fef2f2", tc: "#b91c1c", pill: "pill-red" },
@@ -220,7 +247,7 @@ function renderPrecheck(res) {
     <div class="sec-title"><span>🛡️ 阿宝买前扫雷报告</span><span class="pill ${colors.pill}">${res.category}</span></div>
     <div class="sec-sub">在点击“同意并开通免密”前，把隐形账本算到明面上。</div>
     <div class="verdict-box" style="--vb:${colors.vb};--vbg:${colors.vbg};">
-      <div style="font-size:12px;font-weight:700;color:${colors.tc};margin-bottom:4px;">阿宝买前裁决 · ${res.serviceName}</div>
+      <div style="font-size:12px;font-weight:700;color:${colors.tc};margin-bottom:4px;">阿宝买前建议 · ${res.serviceName}</div>
       <div style="font-size:21px;font-weight:800;color:${colors.tc};">${res.verdict}</div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;">
@@ -234,10 +261,11 @@ function renderPrecheck(res) {
       </div>
       <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:12px;">
         <div style="font-size:12px;color:var(--muted);">次期涨价倍率</div>
-        <div style="font-size:20px;font-weight:800;color:#d97706;">${res.jumpMultiple}x</div>
+        <div style="font-size:20px;font-weight:800;color:#d97706;">${res.jumpMultiple}倍</div>
       </div>
     </div>
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+      ${llmTrap ? `<div style="padding:10px 12px;border-radius:10px;background:#eff6ff;border:1px solid #bfdbfe;font-size:13px;color:#1e3a8a;">🤖 大模型隐蔽条款提示：${llmTrap}</div>` : ""}
       ${
         res.warnings.length
           ? res.warnings.map((w) => `<div style="padding:10px 12px;border-radius:10px;background:#fef2f2;border:1px solid #fecaca;font-size:13px;color:#991b1b;">⚠️ ${w}</div>`).join("")
@@ -249,13 +277,13 @@ function renderPrecheck(res) {
     </div>
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
       <span style="font-size:12px;color:var(--muted);">${res.abaoReminder}</span>
-      <button class="btn btn-soft btn-sm" id="btnSetAbaoRemind">⏰ 模拟设“到期前48h阿宝提醒”</button>
+      <button class="btn btn-soft btn-sm" id="btnSetAbaoRemind">⏰ 设“到期前48小时阿宝提醒”</button>
     </div>`;
 
-  $("#btnSetAbaoRemind").onclick = () => showToast(`已为「${res.serviceName}」创建阿宝次期到期前 48 小时强提醒（沙盒）`);
+  $("#btnSetAbaoRemind").onclick = () => showToast(`已为「${res.serviceName}」创建次期到期前 48 小时提醒（演示）`);
 }
 
-/* ---------- Render Appeal Orchestrator ---------- */
+/* ---------- 渲染事后申诉编排 ---------- */
 function renderAppeal() {
   const audit = auditSubscriptions(state.items);
   const sel = $("#appealSelect");
@@ -274,12 +302,12 @@ function renderAppeal() {
   });
 
   $("#appealWorkflow").innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:12px;background:#ecfdf5;border:1px solid #a7f3d0;margin-bottom:12px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 14px;border-radius:12px;background:#ecfdf5;border:1px solid #a7f3d0;margin-bottom:12px;">
       <div>
-        <div style="font-size:12px;color:#047857;font-weight:700;">退费追回胜率评估</div>
-        <div style="font-size:20px;font-weight:800;color:#065f46;">${pkg.probabilityLabel}</div>
+        <div style="font-size:12px;color:#047857;font-weight:700;">维权要素匹配度（自助参考）</div>
+        <div style="font-size:17px;font-weight:800;color:#065f46;">${pkg.probabilityLabel}</div>
       </div>
-      <div style="font-size:12px;color:#047857;text-align:right;">目标追回金额：<strong>¥${pkg.amount}</strong><br/>命中 ${pkg.grounds.length} 条合规退费依据</div>
+      <div style="font-size:12px;color:#047857;text-align:right;">涉及扣款金额：<strong>¥${pkg.amount}</strong><br/>命中 ${pkg.grounds.length} 项常见退费要素</div>
     </div>
     ${pkg.abaoWorkflowSteps
       .map((s) => {
@@ -290,7 +318,7 @@ function renderAppeal() {
           <div style="flex:1;">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
               <strong style="font-size:13.5px;">${s.title}</strong>
-              <span class="pill ${isDone ? "pill-green" : "pill-amber"} mono">${s.tool}</span>
+              <span class="pill ${isDone ? "pill-green" : "pill-amber"}">${s.toolLabel || s.tool}</span>
             </div>
             <div style="font-size:12.5px;color:var(--muted);margin-top:3px;">${s.detail}</div>
           </div>
@@ -299,21 +327,21 @@ function renderAppeal() {
       .join("")}`;
 
   $("#btnConfirmAppealExec").textContent = state.appealExecuted
-    ? "✅ 已授权完成解约免密 + 提交申诉（阿宝已开启退款进度跟踪）"
-    : "✅ 我已核对证据，授权阿宝执行解约 + 提交申诉（沙盒演示）";
+    ? "✅ 已二次确认：模拟完成解约免密 + 提交申诉（已开启进度跟踪）"
+    : "✅ 我已核对材料，确认执行解约与申诉（模拟演示）";
 
   $("#appealScriptsPanel").innerHTML = `
-    <div class="sec-title"><span>📝 一键可用的举证申诉材料与解约步骤</span></div>
-    <div class="sec-sub">即使现在直接在现实中维权，也可以一键复制发给支付宝账单投诉或商户客服。</div>
+    <div class="sec-title"><span>📝 一键可用的自助申诉参考模板与解约步骤</span></div>
+    <div class="sec-sub">可直接复制发送给支付宝账单投诉或商户在线客服，省去手动查订单与组织措辞的时间。</div>
 
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <strong style="font-size:13.5px;">1. 支付宝账单投诉 / 12315 举证申诉单（含法规依据）</strong>
-      <button class="btn btn-primary btn-sm" id="btnCopyAlipayScript">一键复制投诉单</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+      <strong style="font-size:13.5px;">1. 支付宝账单投诉参考模板（含续费提醒说明）</strong>
+      <button class="btn btn-primary btn-sm" id="btnCopyAlipayScript">一键复制模板</button>
     </div>
     <div class="script-box">${pkg.alipayComplaintScript}</div>
 
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <strong style="font-size:13.5px;">2. 商户在线客服极速退费话术</strong>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+      <strong style="font-size:13.5px;">2. 商户在线客服退费沟通参考话术</strong>
       <button class="btn btn-soft btn-sm" id="btnCopyCsScript">复制客服话术</button>
     </div>
     <div class="script-box" style="background:#1e293b;">${pkg.merchantCsScript}</div>
@@ -323,13 +351,14 @@ function renderAppeal() {
       <ol style="padding-left:18px;display:flex;flex-direction:column;gap:4px;color:var(--ink-2);">
         ${pkg.cancelGuide.steps.map((s) => `<li>${s}</li>`).join("")}
       </ol>
-    </div>`;
+    </div>
+    <div class="compliance-note">提示：以上文案与要素评估仅作为消费者日常自助维权参考，具体退费结果以商户及支付平台实际核验为准，不构成正式法律意见。</div>`;
 
-  $("#btnCopyAlipayScript").onclick = () => copyText(pkg.alipayComplaintScript, "已复制支付宝投诉举证单");
-  $("#btnCopyCsScript").onclick = () => copyText(pkg.merchantCsScript, "已复制商户客服退费话术");
+  $("#btnCopyAlipayScript").onclick = () => copyText(pkg.alipayComplaintScript, "已复制支付宝账单投诉参考模板");
+  $("#btnCopyCsScript").onclick = () => copyText(pkg.merchantCsScript, "已复制商户客服沟通参考话术");
 }
 
-/* ---------- Abao Chat ---------- */
+/* ---------- 阿宝对话 ---------- */
 function appendChatMessage(role, contentHtml, meta = {}) {
   const stream = $("#chatStream");
   const div = document.createElement("div");
@@ -342,12 +371,12 @@ function appendChatMessage(role, contentHtml, meta = {}) {
       .replace(/\n/g, "<br/>");
     const traceHtml = meta.toolTrace
       ? `<div class="trace-box">
-          <div style="font-weight:700;color:#475569;margin-bottom:4px;">🔧 阿宝 × 订阅保镖 Skill 工具调用轨迹（<span class="mono">${meta.skillBadge}</span>）</div>
+          <div style="font-weight:700;color:#475569;margin-bottom:4px;">🔧 阿宝 × 订阅保镖 执行步骤（${meta.skillBadge || "技能调度"}）</div>
           ${meta.toolTrace
             .map(
               (t) => `<div class="trace-row">
                 <span class="trace-dot" style="background:${t.status === "ok" ? "#059669" : "#d97706"};"></span>
-                <span class="mono" style="font-weight:700;">${t.tool}</span>
+                <span style="font-weight:700;white-space:nowrap;">${t.label || t.tool}</span>
                 <span>→ ${t.summary}</span>
               </div>`
             )
@@ -357,36 +386,72 @@ function appendChatMessage(role, contentHtml, meta = {}) {
     const jumpHtml = meta.suggestedTab
       ? `<div style="margin-top:9px;"><button class="btn btn-soft btn-sm" data-chat-jump="${meta.suggestedTab}">打开对应操作台查看详情 →</button></div>`
       : "";
-    div.innerHTML = `<div class="msg-head"><strong>🤖 支付宝阿宝 · 订阅保镖</strong><span>本地离线推理</span></div><div>${formatted}</div>${traceHtml}${jumpHtml}`;
+    const engineTag = meta.engineTag || "端侧离线推理";
+    div.innerHTML = `<div class="msg-head"><strong>🤖 支付宝阿宝 · 订阅保镖</strong><span>${engineTag}</span></div><div>${formatted}</div>${traceHtml}${jumpHtml}`;
   }
   stream.appendChild(div);
   stream.scrollTop = stream.scrollHeight;
   div.querySelectorAll("[data-chat-jump]").forEach((b) => {
     b.onclick = () => switchTab(b.dataset.chatJump);
   });
+  return div;
 }
 
-function sendAbaoQuery(text) {
+async function sendAbaoQuery(text) {
   const q = text.trim();
   if (!q) return;
   appendChatMessage("user", q);
   const res = handleAbaoChat(q, state.items);
-  if (res.switchPreset) {
+
+  if (res.parsedItems?.length) {
+    state.items = [...res.parsedItems, ...state.items];
+    state.sourceLabel = `对话粘贴离线解析（+${res.parsedItems.length} 项）`;
+    renderAll();
+  } else if (res.switchPreset) {
     loadPreset(res.switchPreset);
   }
   if (res.intent === "precheck" && res.payload) {
     renderPrecheck(res.payload);
   }
-  appendChatMessage("bot", res.reply, res);
+
+  // 若用户已开启真实大模型增强，则在端侧精算基础上追加大模型语义分析（失败自动无感回退）
+  if (isLlmActive(state.llmConfig)) {
+    const pendingEl = appendChatMessage("bot", "正在结合端侧精算结果调用大模型做深度语义分析，请稍候...", {
+      engineTag: "大模型分析中",
+    });
+    try {
+      const auditSummary = auditSubscriptions(state.items);
+      const llmReply = await enhanceAbaoChatWithLLM(state.llmConfig, q, auditSummary, res);
+      pendingEl.remove();
+      appendChatMessage("bot", llmReply, {
+        ...res,
+        engineTag: `大模型增强 · ${state.llmConfig.model || "在线模型"}`,
+        toolTrace: [
+          ...(res.toolTrace || []),
+          { label: "大模型深度解读", status: "ok", summary: `已结合端侧精算与 ${state.llmConfig.model} 生成个性化建议` },
+        ],
+      });
+      return;
+    } catch (err) {
+      pendingEl.remove();
+      appendChatMessage("bot", `${res.reply}\n\n（大模型接口暂不可用：${err.message}，已自动切回端侧引擎保障正常体验）`, {
+        ...res,
+        engineTag: "端侧兜底推理",
+      });
+      return;
+    }
+  }
+
+  appendChatMessage("bot", res.reply, { ...res, engineTag: "端侧离线推理" });
 }
 
-/* ---------- Export Family Checklist ---------- */
+/* ---------- 导出家庭体检单 ---------- */
 function exportFamilyReport() {
   const audit = auditSubscriptions(state.items);
   const lines = [
     `=== 家庭订阅刺客止血体检单（${state.sourceLabel}）===`,
     `生成时间：${new Date().toLocaleString("zh-CN")}`,
-    `年度总支出：¥${audit.stats.totalYearly} | 红灯刺客：${audit.stats.redCount} 项 | 年度可立省：¥${audit.stats.potentialSaveYearly}（3年止损 ¥${audit.stats.threeYearDrain}）`,
+    `年度总支出：¥${audit.stats.totalYearly} | 红灯刺客：${audit.stats.redCount} 项 | 年度预计可省：¥${audit.stats.potentialSaveYearly}（3年止损 ¥${audit.stats.threeYearDrain}）`,
     "",
     ...audit.items.map(
       (x, idx) =>
@@ -396,7 +461,22 @@ function exportFamilyReport() {
   copyText(lines, "已复制《家庭订阅止血体检单》，可直接粘贴发给家人");
 }
 
-/* ---------- Init & Events ---------- */
+/* ---------- 大模型配置弹窗 ---------- */
+function openLlmModal() {
+  const cfg = state.llmConfig;
+  const sel = $("#llmProvider");
+  sel.innerHTML = Object.values(LLM_PROVIDERS)
+    .map((p) => `<option value="${p.id}" ${p.id === cfg.provider ? "selected" : ""}>${p.name}</option>`)
+    .join("");
+  $("#llmEnabled").checked = Boolean(cfg.enabled);
+  $("#llmEndpoint").value = cfg.endpoint || "";
+  $("#llmModel").value = cfg.model || "";
+  $("#llmApiKey").value = cfg.apiKey || "";
+  $("#llmTestStatus").textContent = LLM_PROVIDERS[cfg.provider]?.note || "";
+  $("#llmModal").classList.add("open");
+}
+
+/* ---------- 初始化与事件绑定 ---------- */
 function renderCatalog() {
   $("#catalogGrid").innerHTML = MERCHANT_CATALOG.map(
     (m, i) => `
@@ -420,16 +500,17 @@ function renderAll() {
 function init() {
   renderCatalog();
   renderAll();
+  updateEngineStatusUi();
 
-  // 欢迎消息
   appendChatMessage(
     "bot",
-    "你好！我是接入了**「订阅保镖 Skill」**的支付宝阿宝。点击上方快捷指令，或直接输入你的账单/会员促销条款，我会立刻帮你完成 **事前扫雷 / 事中体检 / 事后申诉追回**。",
+    "你好！我是接入了**「订阅保镖技能」**的支付宝阿宝。点上方快捷指令，或直接输入促销小字与扣费短信，我会立刻帮你完成 **事前扫雷 / 事中体检 / 事后申诉材料整理**。",
     {
-      skillBadge: "alipay-subguard.ready",
+      skillBadge: "初始化就绪",
+      engineTag: "端侧离线推理",
       toolTrace: [
-        { tool: "subguard.privacy_guard", status: "ok", summary: "本地离线解析已就绪（0 字节上传云端）" },
-        { tool: "abao.sandbox.init", status: "ok", summary: `已加载「${state.sourceLabel}」脱敏账单（${state.items.length} 项周期扣款）` },
+        { label: "端侧隐私守护", status: "ok", summary: "本地离线解析已就绪（0 字节上传云端）" },
+        { label: "载入模拟账单", status: "ok", summary: `已载入「${state.sourceLabel}」（${state.items.length} 项模拟周期扣款）` },
       ],
     }
   );
@@ -464,18 +545,18 @@ function init() {
     $("#billTextInput").value = [
       "【支付宝】2026-11-24 通过免密自动扣款向扫描全能王支付30.00元（首月1元，未使用）",
       "【微信支付】2026-11-23 向QQ音乐绿钻自动续费15.00元",
-      "Cursor Pro 自动续费 $20.00/月",
+      "海外编程工具自动续费 $20.00/月",
     ].join("\n");
   };
 
   $("#btnParseBill").onclick = () => {
     const newItems = parseBillText($("#billTextInput").value);
     if (!newItems.length) {
-      showToast("未识别到带金额的账单/短信行，请检查输入格式");
+      showToast("未识别到带金额的账单或短信行，请检查输入格式");
       return;
     }
     state.items = [...newItems, ...state.items];
-    state.sourceLabel = `离线解析 + ${newItems.length} 条新明细`;
+    state.sourceLabel = `离线解析（+${newItems.length} 条新明细）`;
     renderAll();
     showToast(`本地离线解析成功，已新增 ${newItems.length} 项并刷新体检报告`);
   };
@@ -492,11 +573,11 @@ function init() {
     }
     const newItems = parseBillText(txt);
     if (!newItems.length) {
-      showToast("CSV 中未匹配到含金额的支出行，可尝试粘贴文本明细");
+      showToast("表格中未匹配到含金额的支出行，可尝试直接粘贴文本明细");
       return;
     }
     state.items = newItems;
-    state.sourceLabel = `本地 CSV（${file.name}）`;
+    state.sourceLabel = `本地账单文件（${file.name}）`;
     renderAll();
     showToast(`已纯本地解析 ${file.name}，识别出 ${newItems.length} 项周期订阅`);
   };
@@ -522,7 +603,7 @@ function init() {
       cycle: "monthly",
       lastDate: "2026-11-24",
       usedDays30: 2,
-      orderNo: `CHECK-${i + 1}`,
+      orderNo: `自查-${i + 1}`,
       note: "来自30+常见订阅自查清单",
     }));
     state.items = [...added, ...state.items];
@@ -531,7 +612,7 @@ function init() {
     showToast(`已加入 ${added.length} 项常见订阅并更新体检`);
   };
 
-  // Precheck
+  // 买前扫雷
   $$("#promoPresets .promo-btn").forEach((b) => {
     b.onclick = () => {
       $("#preName").value = b.dataset.name;
@@ -554,24 +635,49 @@ function init() {
     };
   });
 
-  $("#btnRunPrecheck").onclick = () => {
+  $("#btnRunPrecheck").onclick = async () => {
+    const promoText = $("#prePromoText").value.trim();
     const hasManual = $("#preFirst").value !== "" && $("#preRenew").value !== "";
+    let llmTrap = "";
+    let extra = {};
+
+    if (!hasManual && promoText.length >= 12 && isLlmActive(state.llmConfig)) {
+      showToast("正在调用大模型拆解复杂促销条款...");
+      try {
+        const extracted = await extractOfferWithLLM(state.llmConfig, promoText);
+        if (extracted.serviceName) $("#preName").value = extracted.serviceName;
+        if (extracted.firstPrice != null) $("#preFirst").value = extracted.firstPrice;
+        if (extracted.renewPrice != null) $("#preRenew").value = extracted.renewPrice;
+        if (extracted.cycle) $("#preCycle").value = extracted.cycle;
+        llmTrap = extracted.hiddenTrap || "";
+        extra = {
+          serviceName: extracted.serviceName,
+          firstPrice: Number(extracted.firstPrice),
+          renewPrice: Number(extracted.renewPrice),
+          cycle: extracted.cycle,
+          manualOverride: true,
+        };
+      } catch {
+        // 自动回退至端侧解析
+      }
+    }
+
     const res = analyzePrePurchaseOffer(
       {
-        serviceName: $("#preName").value,
-        firstPrice: $("#preFirst").value === "" ? NaN : Number($("#preFirst").value),
-        renewPrice: $("#preRenew").value === "" ? NaN : Number($("#preRenew").value),
-        cycle: $("#preCycle").value,
-        promoText: $("#prePromoText").value,
-        manualOverride: hasManual,
+        serviceName: extra.serviceName ?? $("#preName").value,
+        firstPrice: extra.firstPrice ?? ($("#preFirst").value === "" ? NaN : Number($("#preFirst").value)),
+        renewPrice: extra.renewPrice ?? ($("#preRenew").value === "" ? NaN : Number($("#preRenew").value)),
+        cycle: extra.cycle ?? $("#preCycle").value,
+        promoText,
+        manualOverride: extra.manualOverride ?? hasManual,
       },
       auditSubscriptions(state.items).items
     );
-    renderPrecheck(res);
+    renderPrecheck(res, llmTrap);
     showToast("阿宝买前扫雷已完成");
   };
 
-  // Appeal
+  // 事后申诉
   $("#appealSelect").onchange = (e) => {
     state.selectedAppealId = e.target.value;
     state.appealExecuted = false;
@@ -583,22 +689,71 @@ function init() {
   $("#btnConfirmAppealExec").onclick = () => {
     state.appealExecuted = true;
     renderAppeal();
-    showToast("二次确认完成！阿宝已解约免密并提交申诉单（沙盒演示）");
+    showToast("本人二次确认完成！已模拟解约免密并提交申诉单");
   };
 
-  // Modals & Export
+  // 弹窗与导出
   $("#btnOpenAbaoSync").onclick = () => $("#syncModal").classList.add("open");
   $("#btnCloseModal").onclick = () => $("#syncModal").classList.remove("open");
   $$("[data-sync-preset]").forEach((b) => {
     b.onclick = () => {
-      loadPreset(b.dataset.syncPreset, `阿宝已只读同步「${PERSONA_PRESETS[b.dataset.syncPreset].label}」`);
+      loadPreset(b.dataset.syncPreset, `已载入「${PERSONA_PRESETS[b.dataset.syncPreset].label}」`);
       $("#syncModal").classList.remove("open");
       switchTab("audit");
     };
   });
   $("#btnExportReport").onclick = exportFamilyReport;
 
-  // 支持通过 ?demo=abao|audit|precheck|appeal 直接展示对应场景（便于演示与自动化截图）
+  // 大模型配置弹窗事件
+  $("#btnOpenLlmModal").onclick = openLlmModal;
+  $("#btnCloseLlmModal").onclick = () => $("#llmModal").classList.remove("open");
+  $("#llmProvider").onchange = (e) => {
+    const p = LLM_PROVIDERS[e.target.value];
+    if (p) {
+      $("#llmEndpoint").value = p.endpoint;
+      $("#llmModel").value = p.model;
+      $("#llmTestStatus").textContent = p.note;
+    }
+  };
+  $("#btnSaveLlm").onclick = () => {
+    state.llmConfig = {
+      enabled: $("#llmEnabled").checked,
+      provider: $("#llmProvider").value,
+      endpoint: $("#llmEndpoint").value.trim(),
+      model: $("#llmModel").value.trim(),
+      apiKey: $("#llmApiKey").value.trim(),
+    };
+    saveLlmConfig(state.llmConfig);
+    updateEngineStatusUi();
+    $("#llmModal").classList.remove("open");
+    showToast(isLlmActive(state.llmConfig) ? "已开启大模型增强（密钥仅存本地）" : "已保存，当前使用端侧离线引擎");
+  };
+  $("#btnClearLlm").onclick = () => {
+    clearLlmConfig();
+    state.llmConfig = loadLlmConfig();
+    $("#llmEnabled").checked = false;
+    $("#llmApiKey").value = "";
+    $("#llmTestStatus").textContent = "已清空本地保存的密钥。";
+    updateEngineStatusUi();
+  };
+  $("#btnTestLlm").onclick = async () => {
+    const tempCfg = {
+      enabled: true,
+      provider: $("#llmProvider").value,
+      endpoint: $("#llmEndpoint").value.trim(),
+      model: $("#llmModel").value.trim(),
+      apiKey: $("#llmApiKey").value.trim(),
+    };
+    $("#llmTestStatus").textContent = "正在测试模型接口连通性...";
+    try {
+      const reply = await testLlmConnection(tempCfg);
+      $("#llmTestStatus").textContent = `✅ 连接成功：${reply}`;
+    } catch (err) {
+      $("#llmTestStatus").textContent = `❌ 连接失败：${err.message}`;
+    }
+  };
+
+  // 支持 ?demo=abao|audit|precheck|appeal 演示截图模式
   const demoTab = new URLSearchParams(location.search).get("demo");
   if (demoTab && ["abao", "audit", "precheck", "appeal"].includes(demoTab)) {
     document.documentElement.classList.add("demo-mode");

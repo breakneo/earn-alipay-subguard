@@ -18,15 +18,15 @@ export const MERCHANT_CATALOG = [
   { key: "百度网盘", aliases: ["百度网盘", "度盘"], category: "云盘办公", typicalMonthly: 25, channel: "支付宝", alt: "低频下载改用闲时单日加速券，立省 80%" },
   { key: "夸克网盘", aliases: ["夸克", "quark"], category: "云盘办公", typicalMonthly: 19, channel: "支付宝", alt: "88VIP 可免费领年卡，避免额外连包" },
   { key: "WPS超级会员", aliases: ["wps", "金山办公"], category: "云盘办公", typicalMonthly: 20, channel: "支付宝", alt: "常规排版免费版足够，PDF转换可用离线开源工具" },
-  { key: "扫描全能王", aliases: ["扫描全能王", "camscanner"], category: "云盘办公", typicalMonthly: 30, channel: "Apple iOS", alt: "iOS 备忘录/支付宝扫一扫文档免费替代" },
-  { key: "iCloud+", aliases: ["icloud", "apple.com/bill"], category: "云盘办公", typicalMonthly: 21, channel: "Apple iOS", alt: "定期导出冷照片至本地硬盘，可从 200GB 降至 50GB" },
+  { key: "扫描全能王", aliases: ["扫描全能王", "camscanner"], category: "云盘办公", typicalMonthly: 30, channel: "苹果 iOS", alt: "苹果备忘录或支付宝扫一扫文档可免费替代" },
+  { key: "苹果云盘 iCloud+", aliases: ["icloud", "apple.com/bill", "苹果云盘"], category: "云盘办公", typicalMonthly: 21, channel: "苹果 iOS", alt: "定期导出冷照片至本地硬盘，可从 200GB 降至 50GB" },
   { key: "美团神会员/省钱包", aliases: ["美团", "神会员", "外卖会员"], category: "生活外卖", typicalMonthly: 15, channel: "支付宝", alt: "每月点外卖少于 4 单则反亏，建议关闭连包" },
   { key: "饿了么吃货卡", aliases: ["饿了么", "淘宝闪购"], category: "生活外卖", typicalMonthly: 15, channel: "支付宝", alt: "避免与美团外卖会员双重自动续费" },
   { key: "高德打车省钱卡", aliases: ["高德", "打车卡", "滴滴省钱"], category: "出行工具", typicalMonthly: 19, channel: "支付宝", alt: "仅当月高频打车时按需购买" },
-  { key: "Keep会员", aliases: ["keep"], category: "运动健康", typicalMonthly: 19, channel: "Apple iOS", alt: "30 天未打卡即属沉睡刺客，建议关闭" },
-  { key: "小红书/知乎盐选", aliases: ["知乎", "盐选"], category: "阅读知识", typicalMonthly: 19, channel: "支付宝", alt: "经典首月低价次月涨价场景，看完单篇故事即关" },
+  { key: "Keep 运动会员", aliases: ["keep"], category: "运动健康", typicalMonthly: 19, channel: "苹果 iOS", alt: "30 天未打卡即属沉睡刺客，建议关闭" },
+  { key: "知乎盐选会员", aliases: ["知乎", "盐选"], category: "阅读知识", typicalMonthly: 19, channel: "支付宝", alt: "经典首月低价次月涨价场景，看完单篇故事即关" },
   { key: "番茄/七猫小说会员", aliases: ["番茄小说", "七猫", "起点"], category: "阅读知识", typicalMonthly: 18, channel: "支付宝", alt: "长辈误触高发项，免费看广告模式即可替代" },
-  { key: "轻颜/醒图/美图VIP", aliases: ["醒图", "美图", "轻颜", "剪映"], category: "修图剪辑", typicalMonthly: 28, channel: "Apple iOS", alt: "常含 7 天免费试用后自动扣年费 ¥168–¥298 陷阱" },
+  { key: "轻颜/醒图/美图VIP", aliases: ["醒图", "美图", "轻颜", "剪映"], category: "修图剪辑", typicalMonthly: 28, channel: "苹果 iOS", alt: "常含 7 天免费试用后自动扣年费 ¥168–¥298 陷阱" },
   { key: "各类手机清理/WiFi大师", aliases: ["清理大师", "天气vip", "wifi", "万能钥匙", "健康管家", "极速省电"], category: "长辈误触高危", typicalMonthly: 29, channel: "支付宝", alt: "系统自带安全清理即可，强烈建议立刻关闭免密并追回" },
   { key: "Google AI Ultra", aliases: ["google ai ultra", "google one ai ultra"], category: "AI 订阅", typicalMonthly: 1812, channel: "外币卡/Google Play", alt: "若未重度消耗 Veo/超高配额，降级 Pro ($19.99) 月省 ¥1,667" },
   { key: "ChatGPT Plus", aliases: ["chatgpt", "openai"], category: "AI 订阅", typicalMonthly: 145, channel: "外币卡/Apple", alt: "多款 AI 会员重叠时保留主力 1 个，其余改按量 API" },
@@ -55,68 +55,68 @@ export const CANCEL_GUIDES = {
       "点选对应商户 → 点击「关闭扣费服务」确认",
     ],
   },
-  "Apple iOS": {
-    channel: "Apple ID 订阅管理",
-    abaoShortcut: "苹果渠道扣款需在 iOS 设置中退订，并可在 reportaproblem.apple.com 申请退款",
+  "苹果 iOS": {
+    channel: "苹果账号订阅管理",
+    abaoShortcut: "苹果渠道扣款需在 iOS 设置中退订，并可在苹果官网“报告问题”页申请退款",
     steps: [
-      "打开 iPhone「设置」→ 点击顶部你的「Apple ID 头像」",
-      "点击「订阅」→ 在「订阅中」找到对应 App",
-      "点击底部红色「取消订阅」确认（已误扣可去 Apple 官网报告问题退款）",
+      "打开苹果手机「设置」→ 点击顶部你的「苹果账号头像」",
+      "点击「订阅」→ 在「订阅中」找到对应应用",
+      "点击底部红色「取消订阅」确认（已误扣可去苹果官网提交退款申请）",
     ],
   },
   其他: {
     channel: "银行卡 / 外币卡周期扣款",
-    abaoShortcut: "前往原服务商 Billing 页面关闭 Auto-renew，或在发卡行 App 关闭境外无卡免密",
+    abaoShortcut: "前往原服务商账单管理页关闭自动续费，或在发卡行应用内关闭境外无卡免密",
     steps: [
-      "登录该服务官网「Account / Billing / Subscription」页面",
-      "点击「Cancel plan / Turn off auto-renew」并截图留存",
-      "如系外币虚拟卡，可在卡商后台暂停该商户扣款或调低单笔限额",
+      "登录该服务官网「账户与订阅管理」页面",
+      "点击「取消订阅 / 关闭自动续费」并截图留存",
+      "如系外币卡，可在发卡行后台暂停该商户扣款或调低单笔限额",
     ],
   },
 };
 
-/** 3 套真实脱敏人生账单沙盒（模拟“阿宝一键授权同步近 90 天支付宝账单”） */
+/** 3 套模拟演示账单（脱敏构造样例，用于快速体验“阿宝一键同步近 90 天周期账单”） */
 export const PERSONA_PRESETS = {
   worker: {
     id: "worker",
-    label: "都市打工人（90天账单）",
+    label: "都市打工人（模拟演示账单）",
     tag: "多平台重叠 + 首月1元涨价",
-    syncSource: "阿宝账单授权沙盒 · 近90天周期扣款（脱敏样例）",
+    syncSource: "阿宝账单同步演示 · 近90天周期扣款（模拟样例）",
     items: [
       { id: "w1", merchant: "爱奇艺连续包月", category: "影音娱乐", channel: "支付宝", amount: 25, prevAmount: 1, cycle: "monthly", lastDate: "2026-11-23", usedDays30: 2, orderNo: "20261123220014882101", note: "首月¥1体验后自动涨至¥25" },
       { id: "w2", merchant: "腾讯视频超级影视VIP", category: "影音娱乐", channel: "微信", amount: 30, prevAmount: 30, cycle: "monthly", lastDate: "2026-11-18", usedDays30: 14, orderNo: "42000024912026111809", note: "日常追剧主力" },
       { id: "w3", merchant: "优酷视频连续包月", category: "影音娱乐", channel: "支付宝", amount: 25, prevAmount: 9, cycle: "monthly", lastDate: "2026-11-21", usedDays30: 0, orderNo: "20261121220014773910", note: "已有88VIP却未关旧连包，近30天未使用" },
       { id: "w4", merchant: "百度网盘超级会员", category: "云盘办公", channel: "支付宝", amount: 25, prevAmount: 25, cycle: "monthly", lastDate: "2026-11-12", usedDays30: 1, orderNo: "20261112220014510293", note: "仅下载过1个压缩包，且已开夸克网盘" },
-      { id: "w5", merchant: "夸克网盘SVIP", category: "云盘办公", channel: "支付宝", amount: 19, prevAmount: 19, cycle: "monthly", lastDate: "2026-11-15", usedDays30: 18, orderNo: "20261115220014602811", note: "高频主力网盘" },
+      { id: "w5", merchant: "夸克网盘超级会员", category: "云盘办公", channel: "支付宝", amount: 19, prevAmount: 19, cycle: "monthly", lastDate: "2026-11-15", usedDays30: 18, orderNo: "20261115220014602811", note: "高频主力网盘" },
       { id: "w6", merchant: "知乎盐选连续包月", category: "阅读知识", channel: "支付宝", amount: 19, prevAmount: 1, cycle: "monthly", lastDate: "2026-11-24", usedDays30: 0, orderNo: "20261124220014992014", note: "昨晚静默自动续费，开通后未阅读" },
-      { id: "w7", merchant: "醒图VIP连续包年", category: "修图剪辑", channel: "Apple iOS", amount: 168, prevAmount: 0.01, cycle: "yearly", lastDate: "2026-11-22", usedDays30: 0, orderNo: "MK9X2L8812", note: "7天0.01元试用忘关，直接扣年费¥168" },
+      { id: "w7", merchant: "醒图VIP连续包年", category: "修图剪辑", channel: "苹果 iOS", amount: 168, prevAmount: 0.01, cycle: "yearly", lastDate: "2026-11-22", usedDays30: 0, orderNo: "MK9X2L8812", note: "7天0.01元试用忘关，直接扣年费¥168" },
       { id: "w8", merchant: "美团神会员省钱包", category: "生活外卖", channel: "支付宝", amount: 15, prevAmount: 15, cycle: "monthly", lastDate: "2026-11-10", usedDays30: 12, orderNo: "20261110220014331029", note: "高频外卖刚需" },
     ],
   },
   elder: {
     id: "elder",
-    label: "银发长辈（防误触体检）",
+    label: "银发长辈（防误触模拟账单）",
     tag: "误点广告免密 + 静默扣费高发",
-    syncSource: "阿宝家庭守护沙盒 · 长辈账单（脱敏样例）",
+    syncSource: "阿宝家庭守护演示 · 长辈账单（模拟样例）",
     items: [
       { id: "e1", merchant: "极速手机清理大师VIP", category: "长辈误触高危", channel: "支付宝", amount: 29.9, prevAmount: 0.1, cycle: "monthly", lastDate: "2026-11-24", usedDays30: 0, orderNo: "20261124220019118201", note: "弹窗诱导0.1元开通，次月连扣29.9元" },
       { id: "e2", merchant: "每日健康天气VIP", category: "长辈误触高危", channel: "支付宝", amount: 28, prevAmount: 1, cycle: "monthly", lastDate: "2026-11-22", usedDays30: 0, orderNo: "20261122220018873120", note: "疑似看天气广告误触免密" },
       { id: "e3", merchant: "番茄小说畅听连续包月", category: "阅读知识", channel: "支付宝", amount: 18, prevAmount: 1, cycle: "monthly", lastDate: "2026-11-19", usedDays30: 1, orderNo: "20261119220018442019", note: "免费看广告即可，无需包月" },
       { id: "e4", merchant: "喜马拉雅巅峰会员", category: "音乐听书", channel: "支付宝", amount: 25, prevAmount: 25, cycle: "monthly", lastDate: "2026-11-15", usedDays30: 22, orderNo: "20261115220018221004", note: "长辈每天听评书，真实高频刚需" },
-      { id: "e5", merchant: "扫描全能王高级版", category: "云盘办公", channel: "Apple iOS", amount: 30, prevAmount: 0, cycle: "monthly", lastDate: "2026-11-23", usedDays30: 0, orderNo: "AP77219033", note: "帮孙子拍过一次作业忘关试用" },
+      { id: "e5", merchant: "扫描全能王高级版", category: "云盘办公", channel: "苹果 iOS", amount: 30, prevAmount: 0, cycle: "monthly", lastDate: "2026-11-23", usedDays30: 0, orderNo: "AP77219033", note: "帮孙子拍过一次作业忘关试用" },
     ],
   },
   developer: {
     id: "developer",
-    label: "AI 开发者（美元+人民币）",
+    label: "数字工具达人（多币种模拟账单）",
     tag: "高额美元AI订阅重叠",
-    syncSource: "阿宝多币种账单 + 开发者自查沙盒",
+    syncSource: "阿宝多币种账单演示（模拟样例）",
     items: [
-      { id: "d1", merchant: "Google AI Ultra", category: "AI 订阅", channel: "其他", amount: 1812, prevAmount: 1812, cycle: "monthly", lastDate: "2026-11-01", usedDays30: 20, orderNo: "GGL-20261101-8812", note: "$249.99/月高额订阅，可评估降级Pro($19.99)" },
-      { id: "d2", merchant: "ChatGPT Plus", category: "AI 订阅", channel: "其他", amount: 145, prevAmount: 145, cycle: "monthly", lastDate: "2026-11-14", usedDays30: 4, orderNo: "OAI-20261114-3310", note: "$20/月，与主力AI高度重叠" },
-      { id: "d3", merchant: "Claude Pro", category: "AI 订阅", channel: "其他", amount: 145, prevAmount: 145, cycle: "monthly", lastDate: "2026-11-17", usedDays30: 3, orderNo: "ANT-20261117-5521", note: "$20/月，低频重叠" },
-      { id: "d4", merchant: "iCloud+ 200GB", category: "云盘办公", channel: "Apple iOS", amount: 21, prevAmount: 21, cycle: "monthly", lastDate: "2026-11-08", usedDays30: 30, orderNo: "APL-20261108-1002", note: "日常设备同步刚需" },
-      { id: "d5", merchant: "WPS超级会员", category: "云盘办公", channel: "支付宝", amount: 20, prevAmount: 9, cycle: "monthly", lastDate: "2026-11-23", usedDays30: 0, orderNo: "20261123220015009123", note: "次月涨价且开发者几乎只用Markdown" },
+      { id: "d1", merchant: "海外大模型旗舰版", category: "AI 订阅", channel: "其他", amount: 1812, prevAmount: 1812, cycle: "monthly", lastDate: "2026-11-01", usedDays30: 20, orderNo: "GGL-20261101-8812", note: "折合 $249.99/月 高额订阅，可评估降级基础版" },
+      { id: "d2", merchant: "ChatGPT 会员", category: "AI 订阅", channel: "其他", amount: 145, prevAmount: 145, cycle: "monthly", lastDate: "2026-11-14", usedDays30: 4, orderNo: "OAI-20261114-3310", note: "$20/月，与主力AI工具高度重叠" },
+      { id: "d3", merchant: "Claude 会员", category: "AI 订阅", channel: "其他", amount: 145, prevAmount: 145, cycle: "monthly", lastDate: "2026-11-17", usedDays30: 3, orderNo: "ANT-20261117-5521", note: "$20/月，低频重叠" },
+      { id: "d4", merchant: "苹果云盘 200GB", category: "云盘办公", channel: "苹果 iOS", amount: 21, prevAmount: 21, cycle: "monthly", lastDate: "2026-11-08", usedDays30: 30, orderNo: "APL-20261108-1002", note: "日常设备相册同步刚需" },
+      { id: "d5", merchant: "WPS超级会员", category: "云盘办公", channel: "支付宝", amount: 20, prevAmount: 9, cycle: "monthly", lastDate: "2026-11-23", usedDays30: 0, orderNo: "20261123220015009123", note: "次月涨价且近30天零使用" },
     ],
   },
 };
@@ -187,7 +187,7 @@ export function parseBillText(rawText, fxRate = USD_TO_CNY) {
             ) || "账单自动扣款商户";
           const meta = matchMerchantMeta(merchant);
           const cycle = /年费|包年|yearly|annual/i.test(line) ? "yearly" : /季|quarter/i.test(line) ? "quarterly" : "monthly";
-          const channel = /微信/.test(line) ? "微信" : /apple|icloud/i.test(line) ? "Apple iOS" : isUsd ? "其他" : meta.channel;
+          const channel = /微信/.test(line) ? "微信" : /apple|icloud/i.test(line) ? "苹果 iOS" : isUsd ? "其他" : meta.channel;
           parsed.push({
             id: `p${seq++}`,
             merchant,
@@ -238,7 +238,7 @@ export function parseBillText(rawText, fxRate = USD_TO_CNY) {
     }
     const meta = matchMerchantMeta(merchant);
     const cycle = /年费|包年|\/年|yearly|annual/i.test(line) ? "yearly" : /季|\/季/i.test(line) ? "quarterly" : "monthly";
-    const channel = /微信/.test(line) ? "微信" : /apple|苹果|ios|icloud/i.test(line) ? "Apple iOS" : isUsd ? "其他" : "支付宝";
+    const channel = /微信/.test(line) ? "微信" : /apple|苹果|ios|icloud/i.test(line) ? "苹果 iOS" : isUsd ? "其他" : "支付宝";
     const dateMatch = line.match(/\d{4}[-/年]\d{1,2}[-/月]\d{1,2}/);
     const lastDate = dateMatch
       ? dateMatch[0].replace(/[年月/]/g, "-").replace(/日$/, "")
@@ -482,17 +482,22 @@ export function buildAppealPackage(item, opts = {}) {
   }
   score = Math.min(score, 95);
 
-  const probabilityLabel = score >= 80 ? `高（预估 ${score}%）` : score >= 60 ? `中（预估 ${score}%）` : `基础（预估 ${score}%）`;
+  const probabilityLabel =
+    score >= 80
+      ? `高（命中 ${grounds.length} 项常见退费要素，仅供参考）`
+      : score >= 60
+      ? `中（命中 ${grounds.length} 项常见退费要素，仅供参考）`
+      : `基础（建议补充未提醒或零使用截图，仅供参考）`;
   const orderRef = item.orderNo || "（请填入支付宝账单订单号）";
 
   const alipayComplaintScript = [
-    `【支付宝账单自动续费退费申诉】`,
+    `【支付宝账单自动续费退费申诉参考模板】`,
     `订单商户：${item.merchant}`,
     `扣款时间与金额：${item.lastDate}，实付 ¥${item.amount}`,
     `交易订单号：${orderRef}`,
     `申诉事由：本人未在续费前 5 日收到显著自动续费提醒${unusedAfterRenew ? "，且扣款后未使用任何会员权益" : ""}${isElderAccidental ? "（系家中长辈误触广告弹窗签约免密）" : ""}。`,
-    `法规依据：依据国家市场监管总局《网络交易监督管理办法》第十八条规定，自动展期/自动续费前五日应以显著方式提请消费者注意并由消费者自主选择。`,
-    `诉求：1）立即解除该商户免密自动扣款协议；2）全额原路退回本次误扣款项 ¥${item.amount} 至原支付宝账户。`,
+    `参考依据：参照《网络交易监督管理办法》第十八条关于自动展期、自动续费前五日显著提醒的相关规定。`,
+    `诉求：1）立即解除该商户免密自动扣款协议；2）申请全额原路退回本次误扣款项 ¥${item.amount} 至原支付账户。`,
   ].join("\n");
 
   const merchantCsScript = `你好，我在 ${item.lastDate} 被「${item.merchant}」通过免密自动扣款 ¥${item.amount}（订单号：${orderRef}）。此前并未收到显著续费提醒${unusedAfterRenew ? "，扣款后也未消耗任何会员权益" : ""}。我已准备关闭自动续费，麻烦核实使用记录并协助办理全额原路退款，谢谢！`;
@@ -501,6 +506,7 @@ export function buildAppealPackage(item, opts = {}) {
     {
       step: 1,
       tool: "abao.bill.get_order_detail",
+      toolLabel: "定位扣款订单",
       title: "定位异常扣款订单与免密协议号",
       detail: `已锁定 ${item.merchant}（订单 ${orderRef}，¥${item.amount}，渠道：${item.channel}）`,
       requiresConfirm: false,
@@ -508,22 +514,25 @@ export function buildAppealPackage(item, opts = {}) {
     {
       step: 2,
       tool: "subguard.verify_refund_grounds",
-      title: "核对《网交办法》第18条与权益零消耗证据",
-      detail: `命中 ${grounds.length} 条高权重退费依据，预估追回成功率 ${score}%`,
+      toolLabel: "核验退费要素",
+      title: "核对续费提醒规范与权益零消耗证据",
+      detail: `命中 ${grounds.length} 项常见退费申诉要素（仅供参考，以平台实际核验为准）`,
       requiresConfirm: false,
     },
     {
       step: 3,
       tool: "abao.deduct.close_agreement",
-      title: "【需用户确认】一键解约对应免密支付协议",
+      toolLabel: "解约免密（需确认）",
+      title: "【需本人确认】一键解约对应免密支付协议",
       detail: "止血优先：先断开后续自动续费，避免下月继续扣款",
       requiresConfirm: true,
     },
     {
       step: 4,
       tool: "abao.dispute.submit_refund",
-      title: "【需用户确认】自动填充并提交支付宝账单申诉 / 商户退费单",
-      detail: "用户二次确认后提交，阿宝持续跟踪退款到账并播报结果",
+      toolLabel: "提交申诉（需确认）",
+      title: "【需本人确认】自动填充并提交账单退费申诉单",
+      detail: "本人二次确认后提交，阿宝持续跟踪退款进度并播报结果",
       requiresConfirm: true,
     },
   ];
@@ -542,24 +551,44 @@ export function buildAppealPackage(item, opts = {}) {
 }
 
 /**
- * 阿宝自然语言对话路由器：把用户口语请求映射到订阅保镖 Skill 工具调用链路
+ * 阿宝自然语言对话路由器：把用户口语请求映射到订阅保镖技能工具链路
  */
 export function handleAbaoChat(message, currentItems) {
   const msg = String(message || "").trim();
   const audit = auditSubscriptions(currentItems);
 
+  // 0. 若用户在对话中直接粘贴了带金额的扣费短信，自动本地离线解析并加入账单
+  if (/(?:【支付宝】|【微信|自动扣款|自动续费|支付\d|扣款\d)/.test(msg) && !/追回|申诉|退款|扫雷|值不值/.test(msg)) {
+    const parsed = parseBillText(msg);
+    if (parsed.length > 0) {
+      const mergedAudit = auditSubscriptions([...parsed, ...currentItems]);
+      return {
+        intent: "parse_sms",
+        skillBadge: "离线短信解析",
+        parsedItems: parsed,
+        toolTrace: [
+          { tool: "subguard.parse_bill", label: "端侧离线解析", status: "ok", summary: `成功解析 ${parsed.length} 条扣费记录（0 字节上传）` },
+          { tool: "subguard.detect_traps", label: "刺客风险体检", status: "ok", summary: `合并后共 ${mergedAudit.stats.count} 项订阅，年度可立省 ¥${mergedAudit.stats.potentialSaveYearly}` },
+        ],
+        reply: `**已离线解析你发来的 ${parsed.length} 条扣费记录并更新体检报告！**\n• 新增识别：${parsed.map((p) => `「${p.merchant} ¥${p.amount}」`).join("、")}。\n• 最新测算：当前共 ${mergedAudit.stats.count} 项周期订阅，红灯高危 **${mergedAudit.stats.redCount} 项**，**预计年度可立省 ¥${mergedAudit.stats.potentialSaveYearly}**。\n• 可直接切换至「账单扫描与止血」查看逐条关闭路径。`,
+        suggestedTab: "audit",
+        payload: mergedAudit,
+      };
+    }
+  }
+
   // 1. 事前浏览拦截意图
-  if (/首月|试用|要不要开|值不值|浏览|准备买|买前|扫雷|优惠/.test(msg)) {
+  if (/首月|试用|要不要开|值不值|浏览|准备买|买前|扫雷|优惠|划算/.test(msg)) {
     const pre = analyzePrePurchaseOffer({ promoText: msg }, audit.items);
     return {
       intent: "precheck",
-      skillBadge: "subguard.precheck_offer",
+      skillBadge: "买前扫雷引擎",
       toolTrace: [
-        { tool: "abao.context.read_offer_text", status: "ok", summary: `识别服务「${pre.serviceName}」，首期 ¥${pre.firstPrice} → 续费 ¥${pre.renewPrice}` },
-        { tool: "abao.bill.load_active_subs", status: "ok", summary: `比对用户当前 ${audit.items.length} 项在途订阅，发现 ${pre.overlaps.length} 项同类重叠` },
-        { tool: "subguard.precheck_offer", status: "ok", summary: `首年真实总成本 ¥${pre.year1Cost}，裁决：${pre.verdict}` },
+        { tool: "abao.context.read_offer_text", label: "读取促销条款", status: "ok", summary: `识别服务「${pre.serviceName}」，首期 ¥${pre.firstPrice} → 续费 ¥${pre.renewPrice}` },
+        { tool: "abao.bill.load_active_subs", label: "比对在途账单", status: "ok", summary: `比对当前 ${audit.items.length} 项在途订阅，发现 ${pre.overlaps.length} 项同类重叠` },
+        { tool: "subguard.precheck_offer", label: "首年成本测算", status: "ok", summary: `首年真实总成本 ¥${pre.year1Cost}，建议：${pre.verdict}` },
       ],
-      reply: `**阿宝事前扫雷结论：${pre.verdict}**\n• 真实账本：表面首期仅 ¥${pre.firstPrice}，次期涨至 ¥${pre.renewPrice}（${pre.jumpMultiple} 倍），**首年真实总支出 ¥${pre.year1Cost}**。\n• 重叠核查：${pre.overlaps.length > 0 ? `你已开通同类「${pre.category}」服务（${pre.overlaps.map((o) => o.merchant).join("、")}），不建议重复付费。` : "未发现同类重叠，但须防忘关续费。"}\n• 阿宝建议：${pre.advice}`,
+      reply: `**阿宝买前扫雷建议：${pre.verdict}**\n• 真实账本：表面首期仅 ¥${pre.firstPrice}，次期涨至 ¥${pre.renewPrice}（${pre.jumpMultiple} 倍），**首年真实总支出 ¥${pre.year1Cost}**。\n• 重叠核查：${pre.overlaps.length > 0 ? `你已开通同类「${pre.category}」服务（${pre.overlaps.map((o) => o.merchant).join("、")}），不建议重复付费。` : "未发现同类重叠，但须防忘关续费。"}\n• 行动建议：${pre.advice}`,
       suggestedTab: "precheck",
       payload: pre,
     };
@@ -571,22 +600,23 @@ export function handleAbaoChat(message, currentItems) {
     if (!target) {
       return {
         intent: "appeal",
-        skillBadge: "subguard.draft_appeal",
-        toolTrace: [{ tool: "abao.bill.search_recent_deduct", status: "ok", summary: "当前账单为空，请先同步账单" }],
-        reply: "阿宝暂未检测到账单记录，请先点击「阿宝授权同步账单」或粘贴扣费短信。",
+        skillBadge: "申诉材料生成",
+        toolTrace: [{ tool: "abao.bill.search_recent_deduct", label: "检索异常扣款", status: "ok", summary: "当前账单为空，请先同步或粘贴账单" }],
+        reply: "暂未检测到账单记录，请先点击「阿宝同步账单」或粘贴扣费短信。",
         suggestedTab: "audit",
       };
     }
     const pkg = buildAppealPackage(target);
     return {
       intent: "appeal",
-      skillBadge: "abao.dispute.prepare_refund",
+      skillBadge: "自动申诉编排",
       toolTrace: pkg.abaoWorkflowSteps.map((s) => ({
         tool: s.tool,
+        label: s.toolLabel,
         status: s.requiresConfirm ? "await_confirm" : "ok",
         summary: s.detail,
       })),
-      reply: `**阿宝已为你备齐「${pkg.merchant}（¥${pkg.amount}）」申诉追回包！**\n• 预估追回胜率：**${pkg.probabilityLabel}**（已匹配《网络交易监督管理办法》第 18 条与零消耗举证）。\n• 安全红线：关闭免密协议与正式提交申诉涉及账户变更，**需你亲自点一次确认**。\n• 点击下方「前往事后追回台」即可一键复制申诉材料或模拟触发阿宝二次确认执行。`,
+      reply: `**已为你备齐「${pkg.merchant}（¥${pkg.amount}）」自助申诉参考包！**\n• 要素匹配度：**${pkg.probabilityLabel}**（已整理未提醒与零使用说明模板，不构成法律意见）。\n• 安全红线：关闭免密协议与正式提交申诉涉及账户变更，**必须由你本人二次确认**。\n• 点击下方按钮进入「误扣申诉与解约」，可一键复制模板或演示确认执行。`,
       suggestedTab: "appeal",
       payload: pkg,
     };
@@ -597,12 +627,12 @@ export function handleAbaoChat(message, currentItems) {
     const elderAudit = auditSubscriptions(PERSONA_PRESETS.elder.items);
     return {
       intent: "elder_audit",
-      skillBadge: "abao.family_guard_scan",
+      skillBadge: "家庭守护体检",
       toolTrace: [
-        { tool: "abao.family.sync_elder_bills", status: "ok", summary: "已切换至「银发长辈防误触」脱敏账单沙盒（5 项自动扣款）" },
-        { tool: "subguard.detect_traps", status: "ok", summary: `揪出 ${elderAudit.stats.redCount} 项高危误触扣费，年度可立省 ¥${elderAudit.stats.potentialSaveYearly}` },
+        { tool: "abao.family.sync_elder_bills", label: "切换长辈账单", status: "ok", summary: "已载入「银发长辈防误触」模拟演示账单（5 项自动扣款）" },
+        { tool: "subguard.detect_traps", label: "误触刺客筛查", status: "ok", summary: `揪出 ${elderAudit.stats.redCount} 项高危误触扣费，年度可立省 ¥${elderAudit.stats.potentialSaveYearly}` },
       ],
-      reply: `**阿宝家庭守护体检完成！** 共扫描 5 项长辈自动扣款，揪出 **${elderAudit.stats.redCount} 项高危刺客**（含「极速手机清理大师VIP」「每日健康天气VIP」等典型广告诱导免密），**一年可帮爸妈省回 ¥${elderAudit.stats.potentialSaveYearly}**。\n• 真正每天听评书的「喜马拉雅」已标绿保留，避免误关长辈刚需。\n• 已自动切换至长辈账单视图，可直接生成大字版《家庭止血体检单》发给家人。`,
+      reply: `**家庭守护体检完成！** 共扫描 5 项长辈模拟自动扣款，揪出 **${elderAudit.stats.redCount} 项高危刺客**（含「极速手机清理大师VIP」「每日健康天气VIP」等典型广告诱导免密），**一年可省回 ¥${elderAudit.stats.potentialSaveYearly}**。\n• 真正每天听评书的「喜马拉雅」已标绿保留，避免误关长辈刚需。\n• 已自动切换至长辈账单视图，可直接导出《家庭订阅止血体检单》发给家人。`,
       suggestedTab: "audit",
       switchPreset: "elder",
     };
@@ -612,13 +642,13 @@ export function handleAbaoChat(message, currentItems) {
   const topRed = audit.items.filter((x) => x.level === "red").slice(0, 3);
   return {
     intent: "sync_audit",
-    skillBadge: "abao.bill.sync_and_audit",
+    skillBadge: "近90天账单体检",
     toolTrace: [
-      { tool: "abao.bill.sync_recurring_90d", status: "ok", summary: `读取当前账单 ${audit.stats.count} 条周期扣款（年度总计 ¥${audit.stats.totalYearly}）` },
-      { tool: "subguard.detect_traps", status: "ok", summary: `识别 🔴高危 ${audit.stats.redCount} 项 / 🟡可优化 ${audit.stats.yellowCount} 项 / 🟢刚需 ${audit.stats.greenCount} 项` },
-      { tool: "subguard.estimate_savings", status: "ok", summary: `年度可立省 ¥${audit.stats.potentialSaveYearly}（3年累计止损 ¥${audit.stats.threeYearDrain}）` },
+      { tool: "abao.bill.sync_recurring_90d", label: "同步周期账单", status: "ok", summary: `读取当前账单 ${audit.stats.count} 条周期扣款（年度总计 ¥${audit.stats.totalYearly}）` },
+      { tool: "subguard.detect_traps", label: "三色刺客诊断", status: "ok", summary: `识别 🔴高危 ${audit.stats.redCount} 项 / 🟡可优化 ${audit.stats.yellowCount} 项 / 🟢刚需 ${audit.stats.greenCount} 项` },
+      { tool: "subguard.estimate_savings", label: "止血金额测算", status: "ok", summary: `年度可立省 ¥${audit.stats.potentialSaveYearly}（3年累计止损 ¥${audit.stats.threeYearDrain}）` },
     ],
-    reply: `**阿宝近 90 天账单订阅体检已完成！**\n• 账单全景：共发现 **${audit.stats.count} 项**周期扣款，年总支出 **¥${audit.stats.totalYearly}**；其中 **🔴 ${audit.stats.redCount} 项立刻止血**、**🟡 ${audit.stats.yellowCount} 项可降级**，**一年可立省 ¥${audit.stats.potentialSaveYearly}**（3 年省 ¥${audit.stats.threeYearDrain}）。\n• 头号刺客：${topRed.map((x) => `「${x.merchant} ¥${x.amount}」`).join("、") || "暂无高危项"}。\n• 下一步：可点「事中体检」逐条关闭免密，或点「事后追回」一键生成退费申诉包。`,
+    reply: `**近 90 天账单订阅体检已完成！**\n• 账单全景：共发现 **${audit.stats.count} 项**周期扣款，年总支出 **¥${audit.stats.totalYearly}**；其中 **🔴 ${audit.stats.redCount} 项建议立刻止血**、**🟡 ${audit.stats.yellowCount} 项可降级平替**，**预计一年可省 ¥${audit.stats.potentialSaveYearly}**（3 年省 ¥${audit.stats.threeYearDrain}）。\n• 头号刺客：${topRed.map((x) => `「${x.merchant} ¥${x.amount}」`).join("、") || "暂无高危项"}。\n• 下一步：进入「账单扫描与止血」查看精确关免密步骤，或进入「误扣申诉与解约」一键生成退费材料。`,
     suggestedTab: "audit",
     payload: audit,
   };
