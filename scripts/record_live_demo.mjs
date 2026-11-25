@@ -307,26 +307,28 @@ async function main() {
     await holdFrames(0.5);
 
     // === 实测 2：事中账单体检 + 真实粘贴短信离线解析 + 关免密指引 ===
-    await setCaption("实测 2 / 5", "事中账单体检：量化年度总支出、红灯刺客与 3 年累计止损");
+    await setCaption("实测 2 / 5", "查账单：3 项核心数字 + 红黄绿止血清单，一眼看懂");
     await clickSelector('.tab-btn[data-tab="audit"]');
-    await holdFrames(2.0);
+    await holdFrames(1.8);
 
-    await setCaption("实测 2 / 5", "实测离线解析：填入多币种扣费短信，浏览器本地秒算并刷新图表");
+    await setCaption("实测 2 / 5", "粘贴扣费短信：浏览器本地秒解析并实时更新止血金额");
+    await clickSelector("#btnToggleSms");
+    await holdFrames(0.5);
     await clickSelector("#btnFillSmsDemo");
-    await holdFrames(1.2);
+    await holdFrames(0.9);
     await clickSelector("#btnParseBill");
-    await holdFrames(2.2);
+    await holdFrames(2.0);
+    await clickSelector("#btnToggleSms");
+    await holdFrames(0.5);
 
-    await setCaption("实测 2 / 5", "红 / 黄 / 绿三色止血处方：区分高危刺客与高频刚需不误伤");
-    await smoothScrollTo(520, 12);
-    await holdFrames(1.6);
-
-    await setCaption("实测 2 / 5", "点开「关免密路径」：给出支付宝、微信、苹果精确解约步骤");
+    await setCaption("实测 2 / 5", "点开「关免密」：给出支付宝、微信、苹果精确解约路径");
+    await smoothScrollTo(240, 8);
+    await holdFrames(1.0);
     await clickSelector("[data-cancel-id]");
-    await holdFrames(2.2);
+    await holdFrames(2.0);
     await clickSelector("#btnCloseCancel");
-    await holdFrames(0.6);
-    await smoothScrollTo(0, 10);
+    await holdFrames(0.5);
+    await smoothScrollTo(0, 8);
 
     // === 实测 3：事前拦截买前扫雷 ===
     await setCaption("实测 3 / 5", "事前拦截：浏览首月 1 元会员页前，3 秒拆穿 28 倍暴涨与同类重叠");

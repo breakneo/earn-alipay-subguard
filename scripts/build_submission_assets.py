@@ -190,11 +190,6 @@ def main() -> None:
         chrome_shot(f"{base}?demo={tab}", raw_p, width=1440, height=900, scale=1, budget=2500)
         raw_shots[tab] = raw_p
 
-    # 同时抓一张 390x844 手机竖屏实景图，用于验收集成效果
-    mobile_shot = SUB_DIR / "mobile_preview.png"
-    chrome_shot(base, mobile_shot, width=390, height=844, scale=2, budget=2500)
-    print("Created:", mobile_shot, f"({mobile_shot.stat().st_size/1024:.0f} KB)")
-
     httpd.shutdown()
 
     fig1 = SUB_DIR / "fig1_abao_copilot.png"
