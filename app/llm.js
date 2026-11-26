@@ -6,9 +6,16 @@
  */
 
 export const LLM_PROVIDERS = {
+  proxy: {
+    id: "proxy",
+    name: "内置在线 AI（GLM-5.3-Flash · 零配置可用）",
+    endpoint: "https://subguard-scnet-proxy.breakneo.workers.dev",
+    model: "GLM-5.3-Flash",
+    note: "已配置限流安全代理，打开即用，无需填密钥",
+  },
   scnet: {
     id: "scnet",
-    name: "国家超算互联网（SCNet · GLM-5.3-Flash）",
+    name: "国家超算互联网（SCNet · 自填密钥）",
     endpoint: "https://api.scnet.cn/api/llm/v1/chat/completions",
     model: "GLM-5.3-Flash",
     note: "国内直连支持浏览器跨域，响应快",
@@ -36,24 +43,24 @@ export const LLM_PROVIDERS = {
   },
   custom: {
     id: "custom",
-    name: "自定义兼容接口 / 限流体验代理",
+    name: "自定义兼容接口",
     endpoint: "",
     model: "GLM-5.3-Flash",
-    note: "支持填写限流代理地址或任意 OpenAI 兼容接口",
+    note: "支持任意 OpenAI 兼容对话接口",
   },
 };
 
-/** 预留评审期免密公益代理地址（部署限流代理后填入即可让评委零配置直享真大模型） */
-export const DEFAULT_REVIEW_PROXY_ENDPOINT = "";
+/** 评审期零配置限流安全代理（Cloudflare Worker，密钥仅存云端加密 Secret，2027-01-05 自动停机） */
+export const DEFAULT_REVIEW_PROXY_ENDPOINT = "https://subguard-scnet-proxy.breakneo.workers.dev";
 
-const STORAGE_KEY = "subguard_llm_config_v1";
+const STORAGE_KEY = "subguard_llm_config_v2";
 
 export function loadLlmConfig() {
   const fallback = {
     enabled: Boolean(DEFAULT_REVIEW_PROXY_ENDPOINT),
-    provider: DEFAULT_REVIEW_PROXY_ENDPOINT ? "custom" : "scnet",
+    provider: DEFAULT_REVIEW_PROXY_ENDPOINT ? "proxy" : "scnet",
     endpoint: DEFAULT_REVIEW_PROXY_ENDPOINT || LLM_PROVIDERS.scnet.endpoint,
-    model: LLM_PROVIDERS.scnet.model,
+    model: "GLM-5.3-Flash",
     apiKey: "",
   };
   try {
